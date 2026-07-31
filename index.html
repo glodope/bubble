@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a1a">
+    <title>ПУЗЫРЁК</title>
+    <style>
+/* ===== RESET & BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none !important;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0a0a1a;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #fff;
+    touch-action: none;
+}
+
+/* ===== GAME CONTAINER ===== */
+#game-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* CANVAS — нижний слой, но ловит тачи */
+#game-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 1;
+    touch-action: none;
+}
+
+/* ===== UI LAYER ===== */
+#ui-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+#ui-layer .screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#ui-layer .screen.active {
+    display: flex;
+    pointer-events: auto;
+}
+
+/* HUD — только отображение, НЕ ловит тачи */
+#hud {
+    display: flex !important;
+    pointer-events: none !important;
+}
+
+#hud * {
+    pointer-events: none !important;
+}
+
+/* ===== GLASS PANELS ===== */
+.menu-glass {
+    background: rgba(20, 20, 40, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 32px 24px;
+    width: 90%;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    animation: glassIn 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes glassIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ===== MAIN MENU ===== */
+.game-title {
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #ffd700, #ff8c00, #ff4500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+    filter: drop-shadow(0 2px 8px rgba(255, 140, 0, 0.3));
+}
+
+.game-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 6px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+}
+
+.menu-bubble-demo {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(100, 200, 255, 0.4), rgba(50, 100, 200, 0.2));
+    box-shadow: 0 0 20px rgba(100, 200, 255, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.2);
+    animation: bubbleFloat 3s ease-in-out infinite;
+    position: relative;
+}
+
+.menu-bubble-demo::after {
+    content: '';
+    position: absolute;
+    top: 18%;
+    left: 22%;
+    width: 22%;
+    height: 22%;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.8);
+    filter: blur(1px);
+}
+
+@keyframes bubbleFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-12px) scale(1.05); }
+}
+
+.best-score {
+    margin-top: 20px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 1px;
+}
+
+.best-score span {
+    color: #ffd700;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    pointer-events: auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:active {
+    transform: scale(0.96);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #ff8c00, #ff4500);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(255, 69, 0, 0.3);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-back {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    margin-top: 16px;
+}
+
+/* ===== HUD ===== */
+#hud {
+    justify-content: space-between;
+    padding: 16px 20px 24px;
+}
+
+.hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.score-box, .combo-box {
+    text-align: center;
+}
+
+.score-label, .combo-label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 2px;
+}
+
+.score-value {
+    font-size: 36px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    line-height: 1;
+}
+
+.combo-box {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.combo-box.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.combo-value {
+    font-size: 28px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hud-bottom {
+    width: 100%;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff8c00, #ffd700);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+/* ===== GAME OVER ===== */
+.dead-title {
+    font-size: 32px;
+    font-weight: 900;
+    color: #ff4500;
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+    animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+.dead-bubble {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 100, 100, 0.3), transparent);
+    border: 2px solid rgba(255, 100, 100, 0.5);
+    position: relative;
+    animation: popDead 0.6s ease;
+}
+
+@keyframes popDead {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.5; }
+    100% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.final-stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 900;
+    color: #fff;
+}
+
+/* ===== SKINS ===== */
+.skins-glass {
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 24px 16px;
+}
+
+.screen-title {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+}
+
+.coins-display {
+    font-size: 18px;
+    color: #ffd700;
+    margin-bottom: 16px;
+    font-weight: 700;
+}
+
+.skins-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.skin-card {
+    aspect-ratio: 1;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    padding: 8px;
+    pointer-events: auto;
+}
+
+.skin-card.active {
+    border-color: #ff8c00;
+    background: rgba(255, 140, 0, 0.1);
+}
+
+.skin-card.locked {
+    opacity: 0.4;
+}
+
+.skin-card:active {
+    transform: scale(0.95);
+}
+
+.skin-preview {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin-bottom: 4px;
+}
+
+.skin-name {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+}
+
+.skin-price {
+    font-size: 10px;
+    color: #ffd700;
+    margin-top: 2px;
+}
+
+.skin-check {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    background: #ff8c00;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+/* ===== SETTINGS ===== */
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.toggle-btn {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    pointer-events: auto;
+}
+
+.toggle-btn.active {
+    background: linear-gradient(135deg, #ff8c00, #ff4500);
+    color: #fff;
+}
+
+/* ===== TUTORIAL ===== */
+#tutorial {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.tutorial-content {
+    text-align: center;
+    animation: tutorialIn 0.5s ease;
+}
+
+@keyframes tutorialIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tutorial-hand {
+    font-size: 64px;
+    margin-bottom: 16px;
+    animation: handTap 1.5s ease-in-out infinite;
+}
+
+@keyframes handTap {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(0.9); }
+}
+
+.tutorial-text {
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 32px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-height: 600px) {
+    .game-title { font-size: 32px; }
+    .menu-glass { padding: 20px 16px; }
+    .btn { padding: 12px; margin: 6px 0; }
+    .menu-bubble-demo { width: 60px; height: 60px; margin-bottom: 16px; }
+}
+
+@media (min-height: 800px) {
+    .menu-glass { padding: 40px 28px; }
+    .game-title { font-size: 48px; }
+}
+
+.skins-glass::-webkit-scrollbar { display: none; }
+.skins-glass { -ms-overflow-style: none; scrollbar-width: none; }
+
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" tabindex="0"></canvas>
+
+        <div id="ui-layer">
+            <div id="main-menu" class="screen active">
+                <div class="menu-glass">
+                    <h1 class="game-title">ПУЗЫРЁК</h1>
+                    <p class="game-subtitle">Всплыви. Не лопни.</p>
+                    <div class="menu-bubble-demo" id="menu-bubble"></div>
+                    <button class="btn btn-primary" id="btn-play">ИГРАТЬ</button>
+                    <button class="btn btn-secondary" id="btn-skins">СКИНЫ</button>
+                    <button class="btn btn-secondary" id="btn-settings">НАСТРОЙКИ</button>
+                    <div class="best-score">🏆 Рекорд: <span id="menu-best">0</span></div>
+                </div>
+            </div>
+
+            <div id="hud" class="screen">
+                <div class="hud-top">
+                    <div class="score-box">
+                        <span class="score-label">ВЫСОТА</span>
+                        <span class="score-value" id="hud-score">0</span>
+                    </div>
+                    <div class="combo-box" id="combo-container">
+                        <span class="combo-label">КОМБО</span>
+                        <span class="combo-value" id="hud-combo">x1</span>
+                    </div>
+                </div>
+                <div class="hud-bottom">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="game-over" class="screen">
+                <div class="menu-glass">
+                    <h2 class="dead-title">ЛОПНУЛ!</h2>
+                    <div class="dead-bubble" id="dead-bubble"></div>
+                    <div class="final-stats">
+                        <div class="stat">
+                            <span class="stat-label">Высота</span>
+                            <span class="stat-value" id="final-score">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Рекорд</span>
+                            <span class="stat-value" id="final-best">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Комбо</span>
+                            <span class="stat-value" id="final-combo">0</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="btn-restart">ЕЩЁ РАЗ</button>
+                    <button class="btn btn-secondary" id="btn-menu">МЕНЮ</button>
+                </div>
+            </div>
+
+            <div id="skins-screen" class="screen">
+                <div class="menu-glass skins-glass">
+                    <h2 class="screen-title">СКИНЫ</h2>
+                    <div class="coins-display">💎 <span id="coins-count">0</span></div>
+                    <div class="skins-grid" id="skins-grid"></div>
+                    <button class="btn btn-back" id="btn-skins-back">← НАЗАД</button>
+                </div>
+            </div>
+
+            <div id="settings-screen" class="screen">
+                <div class="menu-glass">
+                    <h2 class="screen-title">НАСТРОЙКИ</h2>
+                    <div class="setting-row">
+                        <span>Звук</span>
+                        <button class="toggle-btn active" id="toggle-sound">ON</button>
+                    </div>
+                    <div class="setting-row">
+                        <span>Вибрация</span>
+                        <button class="toggle-btn active" id="toggle-vibro">ON</button>
+                    </div>
+                    <div class="setting-row">
+                        <span>Частицы</span>
+                        <button class="toggle-btn active" id="toggle-particles">ON</button>
+                    </div>
+                    <button class="btn btn-back" id="btn-settings-back">← НАЗАД</button>
+                </div>
+            </div>
+
+            <div id="tutorial" class="screen">
+                <div class="tutorial-content">
+                    <div class="tutorial-hand">👆</div>
+                    <p class="tutorial-text">Тапни и держи — прилипнешь к стенке<br>Отпусти — поплывёшь дальше</p>
+                    <button class="btn btn-primary" id="btn-tutorial-ok">ПОНЯТНО</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+// ===== CORE ENGINE =====
+// Главный движок, физика, пузырёк, стакан, камера
+
+const Game = {
+    canvas: null,
+    ctx: null,
+    width: 0,
+    height: 0,
+    dpr: 1,
+    state: 'menu',
+    lastTime: 0,
+    accumulator: 0,
+    tickRate: 1 / 60,
+
+    bubble: null,
+    glass: null,
+    camera: null,
+    world: null,
+
+    score: 0,
+    bestScore: 0,
+    combo: 0,
+    maxCombo: 0,
+    coins: 0,
+
+    settings: {
+        sound: true,
+        vibration: true,
+        particles: true
+    },
+
+    currentSkin: 'default',
+    isPressed: false,
+    touchPos: null,
+
+    init() {
+        this.canvas = document.getElementById('game-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+
+        this.loadSave();
+
+        this.glass = new Glass();
+        this.bubble = new Bubble();
+        this.camera = new Camera();
+
+        this.setupInput();
+
+        this.lastTime = performance.now();
+        requestAnimationFrame((t) => this.loop(t));
+    },
+
+    resize() {
+        const container = document.getElementById('game-container');
+        this.width = container.clientWidth;
+        this.height = container.clientHeight;
+
+        this.canvas.width = this.width * this.dpr;
+        this.canvas.height = this.height * this.dpr;
+        this.canvas.style.width = this.width + 'px';
+        this.canvas.style.height = this.height + 'px';
+
+        this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+
+        if (this.glass) this.glass.resize();
+        if (this.bubble) this.bubble.resize();
+    },
+
+    setupInput() {
+        const handleStart = (e) => {
+            e.preventDefault();
+            if (this.state !== 'playing') return;
+            this.isPressed = true;
+            this.bubble.stick();
+        };
+
+        const handleEnd = (e) => {
+            e.preventDefault();
+            if (this.state !== 'playing') return;
+            this.isPressed = false;
+            this.bubble.release();
+        };
+
+        this.canvas.addEventListener('mousedown', handleStart);
+        this.canvas.addEventListener('mouseup', handleEnd);
+        this.canvas.addEventListener('mouseleave', handleEnd);
+
+        this.canvas.addEventListener('touchstart', handleStart, { passive: false });
+        this.canvas.addEventListener('touchend', handleEnd, { passive: false });
+        this.canvas.addEventListener('touchcancel', handleEnd, { passive: false });
+    },
+
+    start() {
+        this.state = 'playing';
+        this.score = 0;
+        this.combo = 0;
+        this.maxCombo = 0;
+        this.bubble.reset();
+        this.camera.reset();
+        if (this.world) this.world.reset();
+        this.updateHUD();
+    },
+
+    gameOver() {
+        this.state = 'gameover';
+        if (this.settings.vibration && navigator.vibrate) {
+            navigator.vibrate([50, 30, 80]);
+        }
+
+        if (this.score > this.bestScore) {
+            this.bestScore = this.score;
+        }
+
+        const earned = Math.floor(this.score / 10) + Math.floor(this.maxCombo / 2);
+        this.coins += earned;
+        this.save();
+
+        if (this.world) {
+            this.world.createDeathExplosion(this.bubble.x, this.bubble.y, this.bubble.radius);
+        }
+
+        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('pop');
+
+        setTimeout(() => {
+            document.getElementById('final-score').textContent = Math.floor(this.score);
+            document.getElementById('final-best').textContent = this.bestScore;
+            document.getElementById('final-combo').textContent = 'x' + this.maxCombo;
+            showScreen('game-over');
+        }, 400);
+    },
+
+    loop(timestamp) {
+        if (this.lastTime === 0) this.lastTime = timestamp;
+        const dt = Math.min((timestamp - this.lastTime) / 1000, 0.05);
+        this.lastTime = timestamp;
+
+        this.accumulator += dt;
+
+        while (this.accumulator >= this.tickRate) {
+            this.update(this.tickRate);
+            this.accumulator -= this.tickRate;
+        }
+
+        this.render();
+        requestAnimationFrame((t) => this.loop(t));
+    },
+
+    update(dt) {
+        if (this.state === 'playing') {
+            this.bubble.update(dt);
+            this.camera.update(dt, this.bubble.y);
+
+            if (this.world) {
+                this.world.update(dt, this.bubble, this.camera.y);
+            }
+
+            const newScore = Math.max(0, Math.floor(-this.bubble.y / 100));
+            if (newScore > this.score) {
+                this.score = newScore;
+                this.updateHUD();
+            }
+
+            if (this.bubble.dead) {
+                this.gameOver();
+            }
+        } else if (this.state === 'gameover' && this.world) {
+            // Обновляем только частицы на экране смерти
+            this.world.updateParticlesOnly(dt);
+        }
+    },
+
+    render() {
+        const ctx = this.ctx;
+        const w = this.width;
+        const h = this.height;
+
+        ctx.clearRect(0, 0, w, h);
+        this.drawBackground(ctx, w, h);
+
+        ctx.save();
+        ctx.translate(0, -this.camera.y);
+
+        if (this.world) {
+            this.world.renderBackground(ctx, w, h, this.camera.y);
+        }
+
+        this.glass.renderBack(ctx, this.camera.y);
+
+        if (this.world) {
+            this.world.renderObstacles(ctx, this.camera.y);
+        }
+
+        this.bubble.render(ctx);
+
+        if (this.world) {
+            this.world.renderParticles(ctx, this.camera.y);
+        }
+
+        this.glass.renderFront(ctx, this.camera.y);
+
+        ctx.restore();
+        this.drawVignette(ctx, w, h);
+
+        // ОТЛАДКА: показываем состояние на canvas
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.font = '12px monospace';
+        ctx.textAlign = 'left';
+        const debugY = h - 80;
+        ctx.fillText('state: ' + this.state, 10, debugY);
+        ctx.fillText('pressed: ' + this.isPressed, 10, debugY + 16);
+        ctx.fillText('bubble: ' + (this.bubble ? this.bubble.state : 'null'), 10, debugY + 32);
+        ctx.fillText('score: ' + this.score, 10, debugY + 48);
+
+        // Визуальный feedback тапа
+        if (this.isPressed && this.touchPos) {
+            ctx.beginPath();
+            ctx.arc(this.touchPos.x, this.touchPos.y, 30, 0, Math.PI*2);
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+        ctx.restore();
+    },
+
+    drawBackground(ctx, w, h) {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#1a0f00');
+        grad.addColorStop(0.3, '#2d1a05');
+        grad.addColorStop(0.7, '#4a2e0a');
+        grad.addColorStop(1, '#0a0a1a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+    },
+
+    drawVignette(ctx, w, h) {
+        const grad = ctx.createRadialGradient(w/2, h/2, h*0.3, w/2, h/2, h*0.8);
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(1, 'rgba(0,0,0,0.4)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+    },
+
+    updateHUD() {
+        document.getElementById('hud-score').textContent = this.score;
+        document.getElementById('menu-best').textContent = this.bestScore;
+        document.getElementById('coins-count').textContent = this.coins;
+
+        const comboEl = document.getElementById('combo-container');
+        const comboVal = document.getElementById('hud-combo');
+
+        if (this.combo >= 3) {
+            comboEl.classList.add('visible');
+            comboVal.textContent = 'x' + this.combo;
+        } else {
+            comboEl.classList.remove('visible');
+        }
+
+        const progress = Math.min((this.score % 50) / 50 * 100, 100);
+        document.getElementById('progress-fill').style.width = progress + '%';
+    },
+
+    loadSave() {
+        try {
+            const save = JSON.parse(localStorage.getItem('bubble_save') || '{}');
+            this.bestScore = save.best || 0;
+            this.coins = save.coins || 0;
+            this.currentSkin = save.skin || 'default';
+            this.settings = { ...this.settings, ...(save.settings || {}) };
+        } catch(e) {
+            console.log('No save found');
+        }
+    },
+
+    save() {
+        const data = {
+            best: this.bestScore,
+            coins: this.coins,
+            skin: this.currentSkin,
+            settings: this.settings,
+            version: 1
+        };
+        localStorage.setItem('bubble_save', JSON.stringify(data));
+    }
+};
+
+// ===== BUBBLE =====
+class Bubble {
+    constructor() {
+        this.radius = 18;
+        this.x = 0;
+        this.y = 0;
+        this.vx = 0;
+        this.vy = 0;
+        this.state = 'floating';
+        this.stuckSide = null;
+        this.dead = false;
+        this.wobblePhase = 0;
+        this.stickTimer = 0;
+        this.releaseImpulse = 0;
+        this.baseSpeed = 120;
+        this.maxSpeed = 350;
+        this.resize();
+    }
+
+    resize() {
+        // Не телепортируем пузырёка во время игры
+        if (Game.state !== 'playing') {
+            this.x = Game.width / 2;
+            this.y = Game.height * 0.7;
+        }
+    }
+
+    reset() {
+        this.x = Game.width / 2;
+        this.y = 0;
+        this.vx = 0;
+        this.vy = 0;
+        this.state = 'floating';
+        this.stuckSide = null;
+        this.dead = false;
+        this.wobblePhase = 0;
+        this.stickTimer = 0;
+        this.releaseImpulse = 0;
+    }
+
+    stick() {
+        if (this.state === 'stuck' || this.dead) return;
+
+        this.state = 'stuck';
+        this.stickTimer = 0;
+
+        const glass = Game.glass;
+        const distToLeft = Math.abs(this.x - glass.leftX);
+        const distToRight = Math.abs(this.x - glass.rightX);
+        this.stuckSide = distToLeft < distToRight ? 'left' : 'right';
+
+        // Комбо: каждое прилипание = +1 комбо
+        Game.combo++;
+        if (Game.combo > Game.maxCombo) Game.maxCombo = Game.combo;
+        Game.updateHUD();
+
+        if (Game.settings.vibration && navigator.vibrate) {
+            navigator.vibrate(15);
+        }
+
+        if (Game.world) {
+            Game.world.createStickEffect(this.x, this.y, this.stuckSide);
+        }
+
+        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick');
+    }
+
+    release() {
+        if (this.state !== 'stuck' || this.dead) return;
+
+        this.state = 'floating';
+        this.releaseImpulse = 60;
+
+        if (this.stuckSide === 'left') {
+            this.vx = 30;
+        } else {
+            this.vx = -30;
+        }
+
+        this.stuckSide = null;
+
+        if (Game.world) {
+            Game.world.createReleaseEffect(this.x, this.y);
+        }
+
+        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
+    }
+
+    update(dt) {
+        if (this.dead) return;
+
+        this.wobblePhase += dt * 3;
+
+        const glass = Game.glass;
+        const speed = Math.min(this.baseSpeed + Game.score * 1.5, this.maxSpeed);
+
+        if (this.state === 'floating') {
+            this.vy = -speed;
+
+            if (this.releaseImpulse > 0) {
+                this.vy -= this.releaseImpulse;
+                this.releaseImpulse *= Math.pow(0.1, dt);
+                if (this.releaseImpulse < 1) this.releaseImpulse = 0;
+            }
+
+            // Усиленное боковое покачивание
+            this.vx += Math.sin(this.wobblePhase) * 60 * dt;
+            this.vx *= 0.95;
+
+            this.x += this.vx * dt;
+            this.y += this.vy * dt;
+
+            const margin = this.radius + 2;
+            if (this.x - margin < glass.leftX) {
+                this.x = glass.leftX + margin;
+                this.vx = Math.abs(this.vx) * 0.3;
+            }
+            if (this.x + margin > glass.rightX) {
+                this.x = glass.rightX - margin;
+                this.vx = -Math.abs(this.vx) * 0.3;
+            }
+
+        } else if (this.state === 'stuck') {
+            this.vy = 0;
+            this.stickTimer += dt;
+
+            const targetX = this.stuckSide === 'left' 
+                ? glass.leftX + this.radius + 2 
+                : glass.rightX - this.radius - 2;
+
+            this.x += (targetX - this.x) * 10 * dt;
+            this.vx = 0;
+        }
+
+        if (this.y > 200) {
+            this.y = 200;
+        }
+    }
+
+    render(ctx) {
+        if (this.dead) return;
+
+        const x = this.x;
+        const y = this.y;
+        const r = this.radius;
+
+        let scaleX = 1, scaleY = 1;
+        if (this.state === 'stuck') {
+            scaleX = 0.85;
+            scaleY = 1.15;
+        }
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scaleX, scaleY);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, r + 2, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(200, 230, 255, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        const skin = SkinManager.get(this.radius);
+        const grad = ctx.createRadialGradient(-r*0.3, -r*0.3, r*0.1, 0, 0, r);
+        grad.addColorStop(0, skin.highlight);
+        grad.addColorStop(0.3, skin.main);
+        grad.addColorStop(0.8, skin.shadow);
+        grad.addColorStop(1, skin.edge);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.7, 0, Math.PI * 2);
+        ctx.fillStyle = skin.innerGlow;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.ellipse(-r*0.35, -r*0.35, r*0.25, r*0.18, -0.5, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(r*0.3, r*0.4, r*0.08, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    getBounds() {
+        return {
+            x: this.x - this.radius,
+            y: this.y - this.radius,
+            width: this.radius * 2,
+            height: this.radius * 2
+        };
+    }
+}
+
+// ===== GLASS =====
+class Glass {
+    constructor() {
+        this.leftX = 0;
+        this.rightX = 0;
+        this.width = 0;
+        this.wallThickness = 8;
+        this.resize();
+
+        this.causticPoints = [];
+        for (let i = 0; i < 12; i++) {
+            this.causticPoints.push({
+                x: Math.random(),
+                y: Math.random() * 2000,
+                size: 20 + Math.random() * 60,
+                speed: 0.5 + Math.random() * 1.5,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+    }
+
+    resize() {
+        this.width = Math.min(Game.width * 0.75, 320);
+        this.leftX = (Game.width - this.width) / 2;
+        this.rightX = this.leftX + this.width;
+    }
+
+    renderBack(ctx, cameraY) {
+        const h = Game.height + 200;
+        const topY = cameraY - 100;
+        const bottomY = cameraY + h + 100;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        this.causticPoints.forEach(p => {
+            const px = this.leftX + p.x * this.width;
+            const py = p.y - cameraY * 0.3;
+            const wave = Math.sin(Date.now() * 0.001 * p.speed + p.phase);
+            const alpha = 0.03 + wave * 0.02;
+
+            const grad = ctx.createRadialGradient(px, py, 0, px, py, p.size);
+            grad.addColorStop(0, `rgba(255, 220, 150, ${alpha})`);
+            grad.addColorStop(1, 'rgba(255, 220, 150, 0)');
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(px, py, p.size, 0, Math.PI*2);
+            ctx.fill();
+        });
+        ctx.restore();
+
+        ctx.fillStyle = 'rgba(200, 220, 255, 0.04)';
+        ctx.fillRect(this.leftX, topY, this.width, bottomY - topY);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.fillRect(this.leftX - this.wallThickness/2, topY, this.wallThickness, bottomY - topY);
+        ctx.fillRect(this.rightX - this.wallThickness/2, topY, this.wallThickness, bottomY - topY);
+
+        const bottomCurve = 30;
+        ctx.beginPath();
+        ctx.moveTo(this.leftX, bottomY - bottomCurve);
+        ctx.quadraticCurveTo(
+            this.leftX + this.width/2, bottomY + bottomCurve,
+            this.rightX, bottomY - bottomCurve
+        );
+        ctx.lineTo(this.rightX, bottomY - bottomCurve - 20);
+        ctx.lineTo(this.leftX, bottomY - bottomCurve - 20);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.fill();
+    }
+
+    renderFront(ctx, cameraY) {
+        const h = Game.height + 200;
+        const topY = cameraY - 100;
+        const bottomY = cameraY + h + 100;
+
+        const time = Date.now() * 0.001;
+
+        const leftShine = Math.sin(time * 0.7) * 0.5 + 0.5;
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.08 * leftShine})`;
+        ctx.fillRect(this.leftX + 2, topY, 4, bottomY - topY);
+
+        const rightShine = Math.sin(time * 0.7 + 1) * 0.5 + 0.5;
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.06 * rightShine})`;
+        ctx.fillRect(this.rightX - 6, topY, 3, bottomY - topY);
+
+        ctx.beginPath();
+        ctx.ellipse(
+            this.leftX + this.width/2, 
+            topY, 
+            this.width/2 + 2, 
+            6, 
+            0, 0, Math.PI*2
+        );
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(this.leftX, topY);
+        ctx.lineTo(this.leftX, bottomY - 30);
+        ctx.quadraticCurveTo(this.leftX, bottomY, this.leftX + 15, bottomY);
+        ctx.moveTo(this.rightX, topY);
+        ctx.lineTo(this.rightX, bottomY - 30);
+        ctx.quadraticCurveTo(this.rightX, bottomY, this.rightX - 15, bottomY);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+}
+
+// ===== CAMERA =====
+class Camera {
+    constructor() {
+        this.y = 0;
+        this.targetY = 0;
+        this.shake = 0;
+        this.shakeDecay = 5;
+    }
+
+    reset() {
+        this.y = 0;
+        this.targetY = 0;
+        this.shake = 0;
+    }
+
+    update(dt, bubbleY) {
+        const target = bubbleY - Game.height * 0.6;
+        this.targetY = Math.min(0, target);
+
+        this.y += (this.targetY - this.y) * 3 * dt;
+
+        if (this.shake > 0) {
+            this.shake -= this.shakeDecay * dt;
+            if (this.shake < 0) this.shake = 0;
+        }
+
+        if (this.shake > 0) {
+            this.y += (Math.random() - 0.5) * this.shake;
+        }
+    }
+
+    addShake(amount) {
+        this.shake = Math.max(this.shake, amount);
+    }
+}
+
+    </script>
+    <script>
+// ===== WORLD =====
+// Препятствия, частицы, фоновые эффекты
+
+class World {
+    constructor() {
+        this.obstacles = [];
+        this.particles = [];
+        this.bgBubbles = [];
+        this.lastSpawnY = -200;
+        this.spawnDistance = 250;
+
+        for (let i = 0; i < 30; i++) {
+            this.bgBubbles.push({
+                x: Math.random(),
+                y: Math.random() * 3000 - 1000,
+                size: 2 + Math.random() * 6,
+                speed: 20 + Math.random() * 40,
+                wobble: Math.random() * Math.PI * 2
+            });
+        }
+    }
+
+    reset() {
+        this.obstacles = [];
+        this.particles = [];
+        this.lastSpawnY = -200;
+        this.spawnDistance = 250;
+    }
+
+    update(dt, bubble, cameraY) {
+        const spawnY = cameraY - Game.height * 0.5;
+        if (spawnY < this.lastSpawnY - this.spawnDistance) {
+            this.spawnObstacle(spawnY);
+            this.lastSpawnY = spawnY;
+            this.spawnDistance = Math.max(120, 250 - Game.score * 0.5);
+        }
+
+        this.obstacles.forEach(obs => obs.update(dt));
+        this.obstacles = this.obstacles.filter(obs => obs.y < cameraY + Game.height + 200);
+
+        for (const obs of this.obstacles) {
+            if (obs.checkCollision(bubble)) {
+                bubble.dead = true;
+                Game.camera.addShake(8);
+                if (AudioEngine && AudioEngine.ctx) AudioEngine.play('pop');
+                break;
+            }
+        }
+
+        this.updateParticles(dt);
+        this.updateBgBubbles(dt, cameraY);
+
+        // След за пузырьком
+        if (Game.settings.particles && bubble.state === 'floating' && !bubble.dead) {
+            if (Math.random() < 0.3) {
+                this.particles.push({
+                    x: bubble.x + (Math.random() - 0.5) * 10,
+                    y: bubble.y + bubble.radius + 5,
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: 10 + Math.random() * 20,
+                    life: 0.5 + Math.random() * 0.5,
+                    size: 2 + Math.random() * 3,
+                    color: 'rgba(255, 255, 255, 0.3)',
+                    type: 'trail'
+                });
+            }
+        }
+    }
+
+    updateParticlesOnly(dt) {
+        this.updateParticles(dt);
+    }
+
+    updateParticles(dt) {
+        this.particles.forEach(p => {
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vy += (p.gravity || 0) * dt;
+            p.life -= dt;
+            p.vx *= 0.98;
+        });
+        this.particles = this.particles.filter(p => p.life > 0);
+    }
+
+    updateBgBubbles(dt, cameraY) {
+        this.bgBubbles.forEach(b => {
+            b.y -= b.speed * dt;
+            b.wobble += dt * 2;
+            if (b.y < cameraY - Game.height) {
+                b.y = cameraY + Game.height + Math.random() * 500;
+                b.x = Math.random();
+            }
+        });
+    }
+
+    spawnObstacle(y) {
+        const glass = Game.glass;
+        let availableTypes = ['ice', 'lemon'];
+        if (Game.score > 30) availableTypes.push('mint');
+        if (Game.score > 60) availableTypes.push('straw');
+
+        const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+        const x = glass.leftX + 30 + Math.random() * (glass.width - 60);
+
+        let obs;
+        switch(type) {
+            case 'ice': obs = new IceCube(x, y); break;
+            case 'lemon': obs = new LemonSlice(x, y); break;
+            case 'straw': obs = new Straw(x, y); break;
+            case 'mint': obs = new MintLeaf(x, y); break;
+        }
+
+        const tooClose = this.obstacles.some(o => Math.abs(o.y - y) < 80 && Math.abs(o.x - x) < 60);
+        if (!tooClose) {
+            this.obstacles.push(obs);
+        }
+    }
+
+    renderBackground(ctx, w, h, cameraY) {
+        ctx.save();
+        this.bgBubbles.forEach(b => {
+            const bx = Game.glass.leftX + b.x * Game.glass.width;
+            const by = b.y;
+            const offset = Math.sin(b.wobble) * 10;
+
+            ctx.beginPath();
+            ctx.arc(bx + offset, by, b.size, 0, Math.PI*2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.08 + Math.sin(b.wobble)*0.04})`;
+            ctx.fill();
+        });
+        ctx.restore();
+    }
+
+    renderObstacles(ctx, cameraY) {
+        this.obstacles.forEach(obs => obs.render(ctx));
+    }
+
+    renderParticles(ctx, cameraY) {
+        this.particles.forEach(p => {
+            const alpha = Math.min(1, p.life / 0.3);
+            ctx.save();
+            ctx.globalAlpha = alpha;
+
+            if (p.type === 'trail') {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            } else if (p.type === 'splash') {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * (p.life / p.maxLife), 0, Math.PI*2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            } else if (p.type === 'spark') {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            }
+
+            ctx.restore();
+        });
+    }
+
+    createStickEffect(x, y, side) {
+        if (!Game.settings.particles) return;
+        const dir = side === 'left' ? 1 : -1;
+        for (let i = 0; i < 8; i++) {
+            this.particles.push({
+                x: x + dir * 10,
+                y: y + (Math.random() - 0.5) * 20,
+                vx: dir * (20 + Math.random() * 40),
+                vy: (Math.random() - 0.5) * 40,
+                life: 0.3 + Math.random() * 0.3,
+                maxLife: 0.6,
+                size: 2 + Math.random() * 3,
+                color: 'rgba(200, 230, 255, 0.6)',
+                type: 'splash'
+            });
+        }
+    }
+
+    createReleaseEffect(x, y) {
+        if (!Game.settings.particles) return;
+        for (let i = 0; i < 5; i++) {
+            this.particles.push({
+                x: x + (Math.random() - 0.5) * 20,
+                y: y + 10,
+                vx: (Math.random() - 0.5) * 30,
+                vy: 20 + Math.random() * 30,
+                life: 0.4 + Math.random() * 0.3,
+                maxLife: 0.7,
+                size: 2 + Math.random() * 4,
+                color: 'rgba(255, 255, 255, 0.4)',
+                type: 'splash'
+            });
+        }
+    }
+
+    createDeathExplosion(x, y, radius) {
+        if (!Game.settings.particles) return;
+        for (let i = 0; i < 20; i++) {
+            const angle = (Math.PI * 2 / 20) * i + Math.random() * 0.5;
+            const speed = 50 + Math.random() * 150;
+            this.particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 0.5 + Math.random() * 0.5,
+                maxLife: 1.0,
+                size: 2 + Math.random() * 4,
+                color: `rgba(255, ${100 + Math.random()*100}, ${Math.random()*100}, 0.8)`,
+                type: 'spark',
+                gravity: 200
+            });
+        }
+        for (let i = 0; i < 8; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 30 + Math.random() * 80;
+            this.particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 0.6 + Math.random() * 0.4,
+                maxLife: 1.0,
+                size: 3 + Math.random() * 5,
+                color: 'rgba(200, 230, 255, 0.5)',
+                type: 'spark',
+                gravity: 100
+            });
+        }
+    }
+}
+
+// ===== OBSTACLES =====
+
+class Obstacle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.rotation = 0;
+        this.rotSpeed = (Math.random() - 0.5) * 2;
+        this.vy = 0;
+    }
+
+    update(dt) {
+        this.rotation += this.rotSpeed * dt;
+    }
+
+    render(ctx) {}
+
+    checkCollision(bubble) {
+        return false;
+    }
+}
+
+class IceCube extends Obstacle {
+    constructor(x, y) {
+        super(x, y);
+        this.size = 25 + Math.random() * 15;
+        this.rotSpeed = (Math.random() - 0.5) * 1.5;
+        this.floatPhase = Math.random() * Math.PI * 2;
+    }
+
+    update(dt) {
+        super.update(dt);
+        this.floatPhase += dt * 2;
+        this.y += Math.sin(this.floatPhase) * 10 * dt;
+    }
+
+    render(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        const s = this.size; // ИСПРАВЛЕНО: полный размер
+
+        ctx.fillStyle = 'rgba(200, 230, 255, 0.35)';
+        ctx.fillRect(-s/2, -s/2, s, s);
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-s/2, -s/2, s, s);
+
+        ctx.beginPath();
+        ctx.moveTo(-s*0.2, -s*0.1);
+        ctx.lineTo(s*0.1, s*0.2);
+        ctx.lineTo(s*0.3, -s*0.1);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(-s/2, -s/2);
+        ctx.lineTo(-s/2 + s*0.3, -s/2);
+        ctx.lineTo(-s/2, -s/2 + s*0.3);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    checkCollision(bubble) {
+        const s = this.size / 2; // Половина для коллизии
+        const cos = Math.cos(-this.rotation);
+        const sin = Math.sin(-this.rotation);
+
+        const dx = bubble.x - this.x;
+        const dy = bubble.y - this.y;
+        const localX = dx * cos - dy * sin;
+        const localY = dx * sin + dy * cos;
+
+        const closestX = Math.max(-s, Math.min(s, localX));
+        const closestY = Math.max(-s, Math.min(s, localY));
+
+        const distX = localX - closestX;
+        const distY = localY - closestY;
+
+        return (distX * distX + distY * distY) < (bubble.radius * bubble.radius);
+    }
+}
+
+class LemonSlice extends Obstacle {
+    constructor(x, y) {
+        super(x, y);
+        this.radius = 22 + Math.random() * 12;
+        this.rotSpeed = (Math.random() - 0.5) * 3;
+        this.pulsePhase = Math.random() * Math.PI * 2;
+    }
+
+    update(dt) {
+        super.update(dt);
+        this.pulsePhase += dt * 3;
+    }
+
+    render(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        const r = this.radius;
+        const pulse = 1 + Math.sin(this.pulsePhase) * 0.05;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, r * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffd700';
+        ctx.fill();
+        ctx.strokeStyle = '#e6c200';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.85 * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffec8b';
+        ctx.fill();
+
+        const segments = 8;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < segments; i++) {
+            const angle = (Math.PI * 2 / segments) * i;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(angle) * r * 0.8, Math.sin(angle) * r * 0.8);
+            ctx.stroke();
+        }
+
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.1, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    checkCollision(bubble) {
+        const dx = bubble.x - this.x;
+        const dy = bubble.y - this.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        return dist < (this.radius + bubble.radius * 0.8);
+    }
+}
+
+class Straw extends Obstacle {
+    constructor(x, y) {
+        super(x, y);
+        this.width = 12;
+        this.height = 80 + Math.random() * 40;
+        this.rotSpeed = (Math.random() - 0.5) * 1;
+        this.tiltPhase = Math.random() * Math.PI * 2;
+    }
+
+    update(dt) {
+        // ИСПРАВЛЕНО: не вызываем super.update, чтобы избежать двойного вращения
+        this.tiltPhase += dt * 1.5;
+        this.rotation += this.rotSpeed * dt + Math.sin(this.tiltPhase) * 0.5 * dt;
+    }
+
+    render(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        const w = this.width;
+        const h = this.height;
+
+        const stripeCount = Math.floor(h / 10);
+        for (let i = 0; i < stripeCount; i++) {
+            const sy = -h/2 + i * 10;
+            const color = i % 2 === 0 ? '#ff4444' : '#ffffff';
+            ctx.fillStyle = color;
+            ctx.fillRect(-w/2, sy, w, 10);
+        }
+
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-w/2, -h/2, w, h);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(-w/2 + 2, -h/2, 3, h);
+
+        ctx.restore();
+    }
+
+    checkCollision(bubble) {
+        const cos = Math.cos(-this.rotation);
+        const sin = Math.sin(-this.rotation);
+        const dx = bubble.x - this.x;
+        const dy = bubble.y - this.y;
+        const localX = dx * cos - dy * sin;
+        const localY = dx * sin + dy * cos;
+
+        const hw = this.width / 2 + bubble.radius * 0.5;
+        const hh = this.height / 2 + bubble.radius * 0.5;
+
+        return Math.abs(localX) < hw && Math.abs(localY) < hh;
+    }
+}
+
+class MintLeaf extends Obstacle {
+    constructor(x, y) {
+        super(x, y);
+        this.size = 20 + Math.random() * 10;
+        this.rotSpeed = (Math.random() - 0.5) * 2;
+        this.swayPhase = Math.random() * Math.PI * 2;
+    }
+
+    update(dt) {
+        super.update(dt);
+        this.swayPhase += dt * 2;
+        this.x += Math.sin(this.swayPhase) * 15 * dt;
+
+        // ИСПРАВЛЕНО: ограничиваем движение мяты стенками стакана
+        const glass = Game.glass;
+        const margin = this.size;
+        if (this.x < glass.leftX + margin) {
+            this.x = glass.leftX + margin;
+        }
+        if (this.x > glass.rightX - margin) {
+            this.x = glass.rightX - margin;
+        }
+    }
+
+    render(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation + Math.sin(this.swayPhase) * 0.3);
+
+        const s = this.size;
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, s * 0.5, s, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#4caf50';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(0, -s);
+        ctx.lineTo(0, s);
+        ctx.strokeStyle = '#388e3c';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        for (let i = -0.6; i <= 0.6; i += 0.3) {
+            ctx.beginPath();
+            ctx.moveTo(0, i * s);
+            ctx.lineTo(s * 0.3, i * s + s * 0.2);
+            ctx.moveTo(0, i * s);
+            ctx.lineTo(-s * 0.3, i * s + s * 0.2);
+            ctx.strokeStyle = 'rgba(56, 142, 60, 0.5)';
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+        }
+
+        ctx.beginPath();
+        ctx.ellipse(-s*0.1, -s*0.3, s*0.15, s*0.4, -0.3, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    checkCollision(bubble) {
+        const dx = bubble.x - this.x;
+        const dy = bubble.y - this.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        return dist < (this.size * 0.7 + bubble.radius * 0.8);
+    }
+}
+
+    </script>
+    <script>
+// ===== AUDIO ENGINE =====
+// Синтезированные звуки через Web Audio API
+// Переименован в AudioEngine чтобы избежать конфликтов
+
+const AudioEngine = {
+    ctx: null,
+    enabled: true,
+
+    init() {
+        try {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) {
+            console.log('Web Audio not supported');
+        }
+    },
+
+    play(type) {
+        if (!this.ctx || !this.enabled || !Game.settings.sound) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        switch(type) {
+            case 'stick': this.playStick(); break;
+            case 'release': this.playRelease(); break;
+            case 'pop': this.playPop(); break;
+            case 'combo': this.playCombo(); break;
+        }
+    },
+
+    playStick() {
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(200, t);
+        osc.frequency.exponentialRampToValueAtTime(80, t + 0.1);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, t);
+        filter.frequency.exponentialRampToValueAtTime(200, t + 0.1);
+
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.12);
+    },
+
+    playRelease() {
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, t);
+        osc.frequency.exponentialRampToValueAtTime(500, t + 0.08);
+
+        gain.gain.setValueAtTime(0.15, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.12);
+
+        setTimeout(() => {
+            if (!this.ctx) return;
+            const t2 = this.ctx.currentTime;
+            const osc2 = this.ctx.createOscillator();
+            const gain2 = this.ctx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(400, t2);
+            osc2.frequency.exponentialRampToValueAtTime(600, t2 + 0.05);
+            gain2.gain.setValueAtTime(0.1, t2);
+            gain2.gain.exponentialRampToValueAtTime(0.01, t2 + 0.06);
+            osc2.connect(gain2);
+            gain2.connect(this.ctx.destination);
+            osc2.start(t2);
+            osc2.stop(t2 + 0.08);
+        }, 40);
+    },
+
+    playPop() {
+        const t = this.ctx.currentTime;
+
+        const bufferSize = this.ctx.sampleRate * 0.15;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(2000, t);
+        filter.Q.setValueAtTime(1, t);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.4, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start(t);
+
+        const osc = this.ctx.createOscillator();
+        const oscGain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(3000, t);
+        osc.frequency.exponentialRampToValueAtTime(100, t + 0.1);
+        oscGain.gain.setValueAtTime(0.1, t);
+        oscGain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        osc.connect(oscGain);
+        oscGain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.12);
+    },
+
+    playCombo() {
+        const t = this.ctx.currentTime;
+        const notes = [523, 659, 784, 1047];
+
+        notes.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, t + i * 0.08);
+            gain.gain.setValueAtTime(0, t + i * 0.08);
+            gain.gain.linearRampToValueAtTime(0.15, t + i * 0.08 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.08 + 0.2);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t + i * 0.08);
+            osc.stop(t + i * 0.08 + 0.25);
+        });
+    }
+};
+
+// ===== SKINS =====
+const SkinManager = {
+    list: [
+        { id: 'default', name: 'Классик', price: 0, 
+          colors: { main: 'rgba(100, 200, 255, 0.3)', highlight: 'rgba(255, 255, 255, 0.8)', 
+                   shadow: 'rgba(50, 100, 200, 0.2)', edge: 'rgba(100, 200, 255, 0.1)', innerGlow: 'rgba(150, 220, 255, 0.15)' }},
+        { id: 'gold', name: 'Золото', price: 100,
+          colors: { main: 'rgba(255, 215, 0, 0.4)', highlight: 'rgba(255, 255, 200, 0.9)',
+                   shadow: 'rgba(200, 150, 0, 0.3)', edge: 'rgba(255, 200, 0, 0.2)', innerGlow: 'rgba(255, 230, 100, 0.2)' }},
+        { id: 'soap', name: 'Мыло', price: 150,
+          colors: { main: 'rgba(255, 200, 220, 0.3)', highlight: 'rgba(255, 255, 255, 0.9)',
+                   shadow: 'rgba(255, 150, 180, 0.2)', edge: 'rgba(255, 200, 220, 0.15)', innerGlow: 'rgba(255, 220, 230, 0.2)' }},
+        { id: 'plasma', name: 'Плазма', price: 200,
+          colors: { main: 'rgba(150, 0, 255, 0.3)', highlight: 'rgba(200, 100, 255, 0.8)',
+                   shadow: 'rgba(100, 0, 200, 0.3)', edge: 'rgba(150, 50, 255, 0.2)', innerGlow: 'rgba(180, 50, 255, 0.2)' }},
+        { id: 'cosmic', name: 'Галактика', price: 300,
+          colors: { main: 'rgba(100, 0, 150, 0.4)', highlight: 'rgba(200, 150, 255, 0.8)',
+                   shadow: 'rgba(50, 0, 100, 0.3)', edge: 'rgba(150, 100, 255, 0.2)', innerGlow: 'rgba(120, 50, 200, 0.25)' }},
+        { id: 'coffee', name: 'Кофе', price: 250,
+          colors: { main: 'rgba(139, 90, 43, 0.4)', highlight: 'rgba(255, 230, 200, 0.8)',
+                   shadow: 'rgba(100, 60, 20, 0.3)', edge: 'rgba(139, 90, 43, 0.2)', innerGlow: 'rgba(180, 140, 100, 0.2)' }},
+        { id: 'neon', name: 'Неон', price: 350,
+          colors: { main: 'rgba(0, 255, 150, 0.3)', highlight: 'rgba(200, 255, 230, 0.9)',
+                   shadow: 'rgba(0, 200, 100, 0.3)', edge: 'rgba(0, 255, 150, 0.2)', innerGlow: 'rgba(50, 255, 180, 0.25)' }}
+    ],
+
+    unlocked: ['default'],
+
+    init() {
+        try {
+            const save = JSON.parse(localStorage.getItem('bubble_skins') || '[]');
+            this.unlocked = [...new Set(['default', ...save])];
+        } catch(e) {}
+    },
+
+    get(radius) {
+        const skin = this.list.find(s => s.id === Game.currentSkin) || this.list[0];
+        return skin.colors;
+    },
+
+    isUnlocked(id) {
+        return this.unlocked.includes(id);
+    },
+
+    unlock(id) {
+        if (!this.unlocked.includes(id)) {
+            this.unlocked.push(id);
+            localStorage.setItem('bubble_skins', JSON.stringify(this.unlocked));
+        }
+    },
+
+    renderGrid() {
+        const grid = document.getElementById('skins-grid');
+        grid.innerHTML = '';
+
+        this.list.forEach(skin => {
+            const isActive = Game.currentSkin === skin.id;
+            const isUnlocked = this.unlocked.includes(skin.id);
+
+            const card = document.createElement('div');
+            card.className = `skin-card ${isActive ? 'active' : ''} ${!isUnlocked ? 'locked' : ''}`;
+            card.innerHTML = `
+                <div class="skin-preview" style="background: ${skin.colors.main}; box-shadow: inset 0 0 10px ${skin.colors.shadow};"></div>
+                <div class="skin-name">${skin.name}</div>
+                ${!isUnlocked ? `<div class="skin-price">💎 ${skin.price}</div>` : ''}
+                ${isActive ? '<div class="skin-check">✓</div>' : ''}
+            `;
+
+            card.addEventListener('click', () => {
+                if (isActive) return;
+
+                if (isUnlocked) {
+                    Game.currentSkin = skin.id;
+                    Game.save();
+                    this.renderGrid();
+                    if (AudioEngine && AudioEngine.ctx) AudioEngine.play('combo');
+                } else if (Game.coins >= skin.price) {
+                    Game.coins -= skin.price;
+                    this.unlock(skin.id);
+                    Game.currentSkin = skin.id;
+                    Game.save();
+                    this.renderGrid();
+                    Game.updateHUD();
+                    if (AudioEngine && AudioEngine.ctx) AudioEngine.play('combo');
+                } else {
+                    card.style.animation = 'shake 0.3s ease';
+                    setTimeout(() => card.style.animation = '', 300);
+                }
+            });
+
+            grid.appendChild(card);
+        });
+    }
+};
+
+// ===== UI MANAGER =====
+function showScreen(name) {
+    document.querySelectorAll('#ui-layer .screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(name);
+    if (target) target.classList.add('active');
+}
+
+function hideAllScreens() {
+    document.querySelectorAll('#ui-layer .screen').forEach(s => s.classList.remove('active'));
+}
+
+// ===== EVENT LISTENERS =====
+document.addEventListener('DOMContentLoaded', () => {
+    AudioEngine.init();
+    SkinManager.init();
+    Game.world = new World();
+    Game.init();
+
+    showScreen('main-menu');
+    Game.updateHUD();
+
+    document.getElementById('btn-play').addEventListener('click', () => {
+        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
+
+        const hasPlayed = localStorage.getItem('bubble_played');
+        if (!hasPlayed) {
+            showScreen('tutorial');
+        } else {
+            hideAllScreens();
+            showScreen('hud');
+            Game.start();
+        }
+    });
+
+    document.getElementById('btn-skins').addEventListener('click', () => {
+        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick');
+        SkinManager.renderGrid();
+        showScreen('skins-screen');
+    });
+
+    document.getElementById('btn-settings').addEventListener('click', () => {
+        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick');
+        updateSettingsUI();
+        showScreen('settings-screen');
+    });
+
+    document.getElementById('btn-tutorial-ok').addEventListener('click', () => {
+        localStorage.setItem('bubble_played', 'true');
+        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
+        hideAllScreens();
+        showScreen('hud');
+        Game.start();
+    });
+
+    document.getElementById('btn-restart').addEventListener('click', () => {
+        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
+        hideAllScreens();
+        showScreen('hud');
+        Game.start();
+    });
+
+    document.getElementById('btn-menu').addEventListener('click', () => {
+        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick');
+        showScreen('main-menu');
+        Game.updateHUD();
+    });
+
+    document.getElementById('btn-skins-back').addEventListener('click', () => {
+        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick');
+        showScreen('main-menu');
+    });
+
+    document.getElementById('btn-settings-back').addEventListener('click', () => {
+        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick');
+        Game.save();
+        showScreen('main-menu');
+    });
+
+    document.getElementById('toggle-sound').addEventListener('click', function() {
+        Game.settings.sound = !Game.settings.sound;
+        this.classList.toggle('active');
+        this.textContent = Game.settings.sound ? 'ON' : 'OFF';
+        if (Game.settings.sound && AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
+    });
+
+    document.getElementById('toggle-vibro').addEventListener('click', function() {
+        Game.settings.vibration = !Game.settings.vibration;
+        this.classList.toggle('active');
+        this.textContent = Game.settings.vibration ? 'ON' : 'OFF';
+    });
+
+    document.getElementById('toggle-particles').addEventListener('click', function() {
+        Game.settings.particles = !Game.settings.particles;
+        this.classList.toggle('active');
+        this.textContent = Game.settings.particles ? 'ON' : 'OFF';
+    });
+
+    function updateSettingsUI() {
+        const s = Game.settings;
+        const updateToggle = (id, val) => {
+            const btn = document.getElementById(id);
+            btn.classList.toggle('active', val);
+            btn.textContent = val ? 'ON' : 'OFF';
+        };
+        updateToggle('toggle-sound', s.sound);
+        updateToggle('toggle-vibro', s.vibration);
+        updateToggle('toggle-particles', s.particles);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+            if (Game.state === 'playing' && Game.bubble) {
+                Game.isPressed = true;
+                Game.bubble.stick();
+            }
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+            if (Game.state === 'playing' && Game.bubble) {
+                Game.isPressed = false;
+                Game.bubble.release();
+            }
+        }
+    });
+
+    document.addEventListener('touchmove', (e) => {
+        if (Game.state === 'playing') e.preventDefault();
+    }, { passive: false });
+});
+
+    </script>
+</body>
+</html>
