@@ -14,7 +14,7 @@
     padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
-    touch-action: none !important;
+    touch-action: manipulation;
     user-select: none;
     -webkit-user-select: none;
 }
@@ -24,46 +24,36 @@ html, body {
     height: 100%;
     overflow: hidden;
     background: #0a0a1a;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     color: #fff;
-    touch-action: none;
 }
 
-/* ===== GAME CONTAINER ===== */
 #game-container {
-    position: fixed;
-    top: 0;
-    left: 0;
+    position: relative;
     width: 100%;
     height: 100%;
     overflow: hidden;
 }
 
-/* CANVAS — нижний слой, но ловит тачи */
 #game-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
+    display: block;
     width: 100%;
     height: 100%;
-    display: block;
-    z-index: 1;
-    touch-action: none;
 }
 
 /* ===== UI LAYER ===== */
 #ui-layer {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 2;
+    z-index: 10;
 }
 
 #ui-layer .screen {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -72,28 +62,17 @@ html, body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    pointer-events: none;
+    pointer-events: auto;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 #ui-layer .screen.active {
     display: flex;
-    pointer-events: auto;
-}
-
-/* HUD — только отображение, НЕ ловит тачи */
-#hud {
-    display: flex !important;
-    pointer-events: none !important;
-}
-
-#hud * {
-    pointer-events: none !important;
 }
 
 /* ===== GLASS PANELS ===== */
 .menu-glass {
-    background: rgba(20, 20, 40, 0.85);
+    background: rgba(20, 20, 40, 0.75);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -121,6 +100,7 @@ html, body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin-bottom: 4px;
+    text-shadow: none;
     filter: drop-shadow(0 2px 8px rgba(255, 140, 0, 0.3));
 }
 
@@ -201,10 +181,29 @@ html, body {
     box-shadow: 0 4px 16px rgba(255, 69, 0, 0.3);
 }
 
+.btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-primary:hover::after {
+    left: 100%;
+}
+
 .btn-secondary {
     background: rgba(255, 255, 255, 0.08);
     color: rgba(255, 255, 255, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-secondary:active {
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .btn-back {
@@ -218,6 +217,7 @@ html, body {
 #hud {
     justify-content: space-between;
     padding: 16px 20px 24px;
+    pointer-events: none;
 }
 
 .hud-top {
@@ -316,6 +316,28 @@ html, body {
     animation: popDead 0.6s ease;
 }
 
+.dead-bubble::before, .dead-bubble::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 100, 100, 0.4);
+}
+
+.dead-bubble::before {
+    width: 30px;
+    height: 30px;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.dead-bubble::after {
+    width: 20px;
+    height: 20px;
+    bottom: -8px;
+    left: 30%;
+}
+
 @keyframes popDead {
     0% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.4); opacity: 0.5; }
@@ -391,7 +413,6 @@ html, body {
     transition: all 0.2s ease;
     position: relative;
     padding: 8px;
-    pointer-events: auto;
 }
 
 .skin-card.active {
@@ -516,8 +537,48 @@ html, body {
     .game-title { font-size: 48px; }
 }
 
+/* ===== HIDE SCROLLBAR ===== */
 .skins-glass::-webkit-scrollbar { display: none; }
 .skins-glass { -ms-overflow-style: none; scrollbar-width: none; }
+
+
+/* ===== CRITICAL TOUCH FIXES ===== */
+#game-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    touch-action: none;
+}
+
+#ui-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+#ui-layer .screen {
+    position: fixed;
+    pointer-events: none;
+}
+
+#ui-layer .screen.active {
+    pointer-events: auto;
+}
+
+#hud {
+    pointer-events: none !important;
+}
+
+#hud * {
+    pointer-events: none !important;
+}
 
     </style>
 </head>
@@ -610,7 +671,7 @@ html, body {
             <div id="tutorial" class="screen">
                 <div class="tutorial-content">
                     <div class="tutorial-hand">👆</div>
-                    <p class="tutorial-text">Тапни и держи — прилипнешь к стенке<br>Отпусти — поплывёшь дальше</p>
+                    <p class="tutorial-text">Нажми ЛЕВУЮ половину — прилипнешь к ЛЕВОЙ стенке<br>Нажми ПРАВУЮ половину — прилипнешь к ПРАВОЙ<br>Отпусти — вернёшься в центр</p>
                     <button class="btn btn-primary" id="btn-tutorial-ok">ПОНЯТНО</button>
                 </div>
             </div>
@@ -619,8 +680,6 @@ html, body {
 
     <script>
 // ===== CORE ENGINE =====
-// Главный движок, физика, пузырёк, стакан, камера
-
 const Game = {
     canvas: null,
     ctx: null,
@@ -651,7 +710,7 @@ const Game = {
 
     currentSkin: 'default',
     isPressed: false,
-    touchPos: null,
+    touchSide: null,
 
     init() {
         this.canvas = document.getElementById('game-canvas');
@@ -690,27 +749,40 @@ const Game = {
     },
 
     setupInput() {
+        const canvas = this.canvas;
+
+        const getSide = (e) => {
+            const clientX = e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX;
+            return clientX < window.innerWidth / 2 ? 'left' : 'right';
+        };
+
         const handleStart = (e) => {
-            e.preventDefault();
             if (this.state !== 'playing') return;
+            if (e.type === 'touchstart') e.preventDefault();
+
             this.isPressed = true;
-            this.bubble.stick();
+            this.touchSide = getSide(e);
+            if (this.bubble) this.bubble.stick(this.touchSide);
         };
 
         const handleEnd = (e) => {
-            e.preventDefault();
             if (this.state !== 'playing') return;
+            if (e.type === 'touchend') e.preventDefault();
+
             this.isPressed = false;
-            this.bubble.release();
+            this.touchSide = null;
+            if (this.bubble) this.bubble.release();
         };
 
-        this.canvas.addEventListener('mousedown', handleStart);
-        this.canvas.addEventListener('mouseup', handleEnd);
-        this.canvas.addEventListener('mouseleave', handleEnd);
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('mouseup', handleEnd);
+        canvas.addEventListener('mouseleave', handleEnd);
 
-        this.canvas.addEventListener('touchstart', handleStart, { passive: false });
-        this.canvas.addEventListener('touchend', handleEnd, { passive: false });
-        this.canvas.addEventListener('touchcancel', handleEnd, { passive: false });
+        canvas.addEventListener('touchstart', handleStart, { passive: false });
+        canvas.addEventListener('touchend', handleEnd, { passive: false });
+        canvas.addEventListener('touchcancel', handleEnd, { passive: false });
+
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
     },
 
     start() {
@@ -718,6 +790,8 @@ const Game = {
         this.score = 0;
         this.combo = 0;
         this.maxCombo = 0;
+        this.isPressed = false;
+        this.touchSide = null;
         this.bubble.reset();
         this.camera.reset();
         if (this.world) this.world.reset();
@@ -787,7 +861,6 @@ const Game = {
                 this.gameOver();
             }
         } else if (this.state === 'gameover' && this.world) {
-            // Обновляем только частицы на экране смерти
             this.world.updateParticlesOnly(dt);
         }
     },
@@ -799,6 +872,11 @@ const Game = {
 
         ctx.clearRect(0, 0, w, h);
         this.drawBackground(ctx, w, h);
+
+        // Подсказка зон тапа во время игры
+        if (this.state === 'playing') {
+            this.drawTapZones(ctx, w, h);
+        }
 
         ctx.save();
         ctx.translate(0, -this.camera.y);
@@ -823,27 +901,6 @@ const Game = {
 
         ctx.restore();
         this.drawVignette(ctx, w, h);
-
-        // ОТЛАДКА: показываем состояние на canvas
-        ctx.save();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.font = '12px monospace';
-        ctx.textAlign = 'left';
-        const debugY = h - 80;
-        ctx.fillText('state: ' + this.state, 10, debugY);
-        ctx.fillText('pressed: ' + this.isPressed, 10, debugY + 16);
-        ctx.fillText('bubble: ' + (this.bubble ? this.bubble.state : 'null'), 10, debugY + 32);
-        ctx.fillText('score: ' + this.score, 10, debugY + 48);
-
-        // Визуальный feedback тапа
-        if (this.isPressed && this.touchPos) {
-            ctx.beginPath();
-            ctx.arc(this.touchPos.x, this.touchPos.y, 30, 0, Math.PI*2);
-            ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-        }
-        ctx.restore();
     },
 
     drawBackground(ctx, w, h) {
@@ -854,6 +911,29 @@ const Game = {
         grad.addColorStop(1, '#0a0a1a');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, w, h);
+    },
+
+    drawTapZones(ctx, w, h) {
+        // Лёгкая подсветка зон тапа
+        const zoneAlpha = 0.03;
+
+        // Левая зона
+        ctx.fillStyle = `rgba(100, 200, 255, ${this.isPressed && this.touchSide === 'left' ? 0.08 : zoneAlpha})`;
+        ctx.fillRect(0, 0, w/2, h);
+
+        // Правая зона
+        ctx.fillStyle = `rgba(100, 200, 255, ${this.isPressed && this.touchSide === 'right' ? 0.08 : zoneAlpha})`;
+        ctx.fillRect(w/2, 0, w/2, h);
+
+        // Разделительная линия
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 10]);
+        ctx.beginPath();
+        ctx.moveTo(w/2, 0);
+        ctx.lineTo(w/2, h);
+        ctx.stroke();
+        ctx.setLineDash([]);
     },
 
     drawVignette(ctx, w, h) {
@@ -890,9 +970,7 @@ const Game = {
             this.coins = save.coins || 0;
             this.currentSkin = save.skin || 'default';
             this.settings = { ...this.settings, ...(save.settings || {}) };
-        } catch(e) {
-            console.log('No save found');
-        }
+        } catch(e) {}
     },
 
     save() {
@@ -919,23 +997,23 @@ class Bubble {
         this.stuckSide = null;
         this.dead = false;
         this.wobblePhase = 0;
-        this.stickTimer = 0;
-        this.releaseImpulse = 0;
         this.baseSpeed = 120;
         this.maxSpeed = 350;
+        this.centerX = 0;
         this.resize();
     }
 
     resize() {
-        // Не телепортируем пузырёка во время игры
+        this.centerX = Game.width / 2;
         if (Game.state !== 'playing') {
-            this.x = Game.width / 2;
+            this.x = this.centerX;
             this.y = Game.height * 0.7;
         }
     }
 
     reset() {
-        this.x = Game.width / 2;
+        this.centerX = Game.width / 2;
+        this.x = this.centerX;
         this.y = 0;
         this.vx = 0;
         this.vy = 0;
@@ -943,22 +1021,15 @@ class Bubble {
         this.stuckSide = null;
         this.dead = false;
         this.wobblePhase = 0;
-        this.stickTimer = 0;
-        this.releaseImpulse = 0;
     }
 
-    stick() {
+    stick(side) {
         if (this.state === 'stuck' || this.dead) return;
 
         this.state = 'stuck';
-        this.stickTimer = 0;
+        this.stuckSide = side;
 
-        const glass = Game.glass;
-        const distToLeft = Math.abs(this.x - glass.leftX);
-        const distToRight = Math.abs(this.x - glass.rightX);
-        this.stuckSide = distToLeft < distToRight ? 'left' : 'right';
-
-        // Комбо: каждое прилипание = +1 комбо
+        // Комбо за каждое прилипание
         Game.combo++;
         if (Game.combo > Game.maxCombo) Game.maxCombo = Game.combo;
         Game.updateHUD();
@@ -978,13 +1049,11 @@ class Bubble {
         if (this.state !== 'stuck' || this.dead) return;
 
         this.state = 'floating';
-        this.releaseImpulse = 60;
+        this.releaseImpulse = 40;
 
-        if (this.stuckSide === 'left') {
-            this.vx = 30;
-        } else {
-            this.vx = -30;
-        }
+        // Импульс к центру
+        const dirToCenter = this.centerX > this.x ? 1 : -1;
+        this.vx = dirToCenter * 80;
 
         this.stuckSide = null;
 
@@ -999,6 +1068,7 @@ class Bubble {
         if (this.dead) return;
 
         this.wobblePhase += dt * 3;
+        this.centerX = Game.width / 2;
 
         const glass = Game.glass;
         const speed = Math.min(this.baseSpeed + Game.score * 1.5, this.maxSpeed);
@@ -1012,9 +1082,14 @@ class Bubble {
                 if (this.releaseImpulse < 1) this.releaseImpulse = 0;
             }
 
-            // Усиленное боковое покачивание
-            this.vx += Math.sin(this.wobblePhase) * 60 * dt;
-            this.vx *= 0.95;
+            // Покачивание
+            this.vx += Math.sin(this.wobblePhase) * 40 * dt;
+
+            // Притяжение к центру (слабое, чтобы не мешать уклонению)
+            const distToCenter = this.centerX - this.x;
+            this.vx += distToCenter * 2 * dt;
+
+            this.vx *= 0.92;
 
             this.x += this.vx * dt;
             this.y += this.vy * dt;
@@ -1031,14 +1106,13 @@ class Bubble {
 
         } else if (this.state === 'stuck') {
             this.vy = 0;
-            this.stickTimer += dt;
+            this.vx = 0;
 
             const targetX = this.stuckSide === 'left' 
-                ? glass.leftX + this.radius + 2 
-                : glass.rightX - this.radius - 2;
+                ? glass.leftX + this.radius + 4 
+                : glass.rightX - this.radius - 4;
 
-            this.x += (targetX - this.x) * 10 * dt;
-            this.vx = 0;
+            this.x += (targetX - this.x) * 15 * dt;
         }
 
         if (this.y > 200) {
@@ -1055,8 +1129,8 @@ class Bubble {
 
         let scaleX = 1, scaleY = 1;
         if (this.state === 'stuck') {
-            scaleX = 0.85;
-            scaleY = 1.15;
+            scaleX = 0.82;
+            scaleY = 1.18;
         }
 
         ctx.save();
@@ -1103,15 +1177,6 @@ class Bubble {
         ctx.stroke();
 
         ctx.restore();
-    }
-
-    getBounds() {
-        return {
-            x: this.x - this.radius,
-            y: this.y - this.radius,
-            width: this.radius * 2,
-            height: this.radius * 2
-        };
     }
 }
 
