@@ -86,7 +86,7 @@ html,body { width:100%; height:100%; overflow:hidden; background:#0a0a1a; font-f
 @media (min-height:800px) { .menu-glass{padding:44px 32px} .game-title{font-size:52px} .score-value{font-size:60px} }
 .coin-icon { display:inline-block; width:16px; height:16px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #fff8c8, #ffd700, #daa520); border:1.2px solid #b8860b; box-shadow:0 0 3px rgba(255,215,0,0.4); vertical-align:middle; margin-right:3px; position:relative; top:-1px; }
 .coin-icon::after { content:'$'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:9px; font-weight:900; color:rgba(140,100,0,0.7); }
-.coin-small { width:10px !important; height:10px !important; vertical-align:middle !important; margin-right:2px !important; border-width:1px !important; top:0 !important; }
+.coin-small { width:10px !important; height:10px !important; vertical-align:middle !important; margin-right:2px !important; border-width:1px !important; top:-1px !important; position:relative !important; }
 .coin-small::after { font-size:6px !important; transform:translate(-50%,-50%) !important; }
 .skins-glass::-webkit-scrollbar{display:none} .skins-glass{-ms-overflow-style:none;scrollbar-width:none}
     </style>
@@ -901,14 +901,21 @@ const AudioEngine = {
     },
     playCoin() {
         const t = this.ctx.currentTime;
+        // Основной звонкий тон
         const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-        o.type = 'sine'; o.frequency.setValueAtTime(1000, t); o.frequency.exponentialRampToValueAtTime(1600, t + 0.04);
-        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.06, t + 0.012); g.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
-        o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + 0.14);
+        o.type = 'sine'; o.frequency.setValueAtTime(1200, t); o.frequency.exponentialRampToValueAtTime(1800, t + 0.03);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.07, t + 0.008); g.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + 0.12);
+        // Второй тон — гармоника
         const o2 = this.ctx.createOscillator(), g2 = this.ctx.createGain();
-        o2.type = 'sine'; o2.frequency.setValueAtTime(1600, t + 0.02); o2.frequency.exponentialRampToValueAtTime(2100, t + 0.05);
-        g2.gain.setValueAtTime(0, t + 0.02); g2.gain.linearRampToValueAtTime(0.03, t + 0.03); g2.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-        o2.connect(g2); g2.connect(this.ctx.destination); o2.start(t + 0.02); o2.stop(t + 0.12);
+        o2.type = 'sine'; o2.frequency.setValueAtTime(2400, t + 0.01); o2.frequency.exponentialRampToValueAtTime(3000, t + 0.04);
+        g2.gain.setValueAtTime(0, t + 0.01); g2.gain.linearRampToValueAtTime(0.03, t + 0.02); g2.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+        o2.connect(g2); g2.connect(this.ctx.destination); o2.start(t + 0.01); o2.stop(t + 0.1);
+        // Лёгкое "дзинь"
+        const o3 = this.ctx.createOscillator(), g3 = this.ctx.createGain();
+        o3.type = 'triangle'; o3.frequency.setValueAtTime(3600, t + 0.02); o3.frequency.exponentialRampToValueAtTime(4500, t + 0.03);
+        g3.gain.setValueAtTime(0, t + 0.02); g3.gain.linearRampToValueAtTime(0.015, t + 0.025); g3.gain.exponentialRampToValueAtTime(0.01, t + 0.06);
+        o3.connect(g3); g3.connect(this.ctx.destination); o3.start(t + 0.02); o3.stop(t + 0.08);
     }
 };
 
@@ -937,7 +944,7 @@ const SkinManager = {
             el.style.background = `radial-gradient(circle at 30% 30%, ${c.highlight}, ${c.main}, ${c.shadow})`;
             const glowStrong = c.glow.replace(/,[\d.]+\)$/, ',0.55)');
             const glowSoft = c.glow.replace(/,[\d.]+\)$/, ',0.2)');
-            el.style.boxShadow = `0 0 28px ${glowStrong}, 0 0 52px ${glowSoft}, inset 0 0 24px rgba(255,255,255,0.15)`;
+            el.style.boxShadow = `0 0 16px ${glowStrong}, 0 0 32px ${glowSoft}, inset 0 0 20px rgba(255,255,255,0.12)`;
         }
     },
     get(r) { return (this.list.find(s => s.id === Game.currentSkin) || this.list[0]).colors; },
@@ -980,11 +987,11 @@ function showScreen(name) {
     if (t) { t.classList.add('active'); }
     const canvas = document.getElementById('game-canvas');
     if (name === 'main-menu' || name === 'skins-screen' || name === 'settings-screen') {
-        canvas.style.filter = 'blur(14px) brightness(0.55)';
+        canvas.style.filter = 'blur(10px) brightness(0.55)';
     } else if (name === 'hud') {
         canvas.style.filter = 'none';
     } else if (name === 'game-over') {
-        canvas.style.filter = 'blur(8px) brightness(0.45)';
+        canvas.style.filter = 'blur(6px) brightness(0.45)';
     }
 }
 function hideAllScreens() { document.querySelectorAll('#ui-layer .screen').forEach(s => s.classList.remove('active')); }
