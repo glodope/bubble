@@ -84,8 +84,10 @@ html,body { width:100%; height:100%; overflow:hidden; background:#0a0a1a; font-f
 /* ===== RESPONSIVE ===== */
 @media (max-height:600px) { .game-title{font-size:34px} .menu-glass{padding:20px 16px} .btn{padding:12px;margin:6px 0} .menu-bubble-demo{width:70px;height:70px;margin-bottom:18px} .score-value{font-size:40px} }
 @media (min-height:800px) { .menu-glass{padding:44px 32px} .game-title{font-size:52px} .score-value{font-size:60px} }
-.coin-icon { display:inline-block; width:18px; height:18px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #fff8c8, #ffd700, #daa520); border:1.5px solid #b8860b; box-shadow:0 0 4px rgba(255,215,0,0.4); vertical-align:middle; margin-right:2px; position:relative; }
-.coin-icon::after { content:'$'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:10px; font-weight:900; color:rgba(140,100,0,0.7); }
+.coin-icon { display:inline-block; width:14px; height:14px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #fff8c8, #ffd700, #daa520); border:1.2px solid #b8860b; box-shadow:0 0 3px rgba(255,215,0,0.4); vertical-align:text-bottom; margin-right:3px; position:relative; }
+.coin-icon::after { content:'$'; position:absolute; top:50%; left:50%; transform:translate(-50%,-52%); font-size:8px; font-weight:900; color:rgba(140,100,0,0.7); }
+.coin-small { width:10px !important; height:10px !important; vertical-align:middle !important; margin-right:2px !important; border-width:1px !important; }
+.coin-small::after { font-size:6px !important; transform:translate(-50%,-50%) !important; }
 .skins-glass::-webkit-scrollbar{display:none} .skins-glass{-ms-overflow-style:none;scrollbar-width:none}
     </style>
 </head>
@@ -763,14 +765,14 @@ class LemonSlice extends Obstacle {
         // Альбедо — белый слой с градиентом
         const albGrad = ctx.createRadialGradient(-r * 0.15, -r * 0.15, r * 0.05, 0, 0, r * 0.86);
         albGrad.addColorStop(0, '#faf6e6'); albGrad.addColorStop(1, '#e8e2c8');
-        ctx.beginPath(); ctx.arc(0, 0, r * 0.86 * p, 0, Math.PI * 2); ctx.fillStyle = albGrad; ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.93 * p, 0, Math.PI * 2); ctx.fillStyle = albGrad; ctx.fill();
         // Мякоть — тёплый градиент
         const pulpGrad = ctx.createRadialGradient(-r * 0.2, -r * 0.2, r * 0.05, 0, 0, r * 0.76);
         pulpGrad.addColorStop(0, '#f0e060'); pulpGrad.addColorStop(0.5, '#dcc830'); pulpGrad.addColorStop(1, '#c4b020');
-        ctx.beginPath(); ctx.arc(0, 0, r * 0.76 * p, 0, Math.PI * 2); ctx.fillStyle = pulpGrad; ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.87 * p, 0, Math.PI * 2); ctx.fillStyle = pulpGrad; ctx.fill();
         // Дольки — светлые, мягкие линии
         const segs = 9; ctx.strokeStyle = 'rgba(200,185,120,0.45)'; ctx.lineWidth = 1.1;
-        for (let i = 0; i < segs; i++) { const a = (Math.PI * 2 / segs) * i; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * r * 0.72, Math.sin(a) * r * 0.72); ctx.stroke(); }
+        for (let i = 0; i < segs; i++) { const a = (Math.PI * 2 / segs) * i; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * r * 0.84, Math.sin(a) * r * 0.84); ctx.stroke(); }
         // Центр — белая сердцевина
         ctx.beginPath(); ctx.arc(0, 0, r * 0.09, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fill();
         // Крупный глянцевый блик сверху-слева
@@ -879,17 +881,17 @@ const AudioEngine = {
         for (let i = 0; i < bs; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bs, 2.5);
         const n = this.ctx.createBufferSource(); n.buffer = b;
         const f = this.ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.setValueAtTime(2000, t); f.frequency.exponentialRampToValueAtTime(400, t + 0.06); f.Q.setValueAtTime(0.6, t);
-        const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.55, t + 0.003); g.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+        const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.35, t + 0.003); g.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
         n.connect(f); f.connect(g); g.connect(this.ctx.destination); n.start(t);
         // Низкий "хлоп" — давление воздуха
         const o = this.ctx.createOscillator(), og = this.ctx.createGain();
         o.type = 'sine'; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(30, t + 0.1);
-        og.gain.setValueAtTime(0, t); og.gain.linearRampToValueAtTime(0.5, t + 0.004); og.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+        og.gain.setValueAtTime(0, t); og.gain.linearRampToValueAtTime(0.3, t + 0.004); og.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
         o.connect(og); og.connect(this.ctx.destination); o.start(t); o.stop(t + 0.15);
         // Лёгкий щелчок оболочки
         const o2 = this.ctx.createOscillator(), g2 = this.ctx.createGain();
         o2.type = 'triangle'; o2.frequency.setValueAtTime(800, t); o2.frequency.exponentialRampToValueAtTime(200, t + 0.04);
-        g2.gain.setValueAtTime(0, t); g2.gain.linearRampToValueAtTime(0.15, t + 0.002); g2.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+        g2.gain.setValueAtTime(0, t); g2.gain.linearRampToValueAtTime(0.1, t + 0.002); g2.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
         o2.connect(g2); g2.connect(this.ctx.destination); o2.start(t); o2.stop(t + 0.06);
     },
 
@@ -899,16 +901,14 @@ const AudioEngine = {
     },
     playCoin() {
         const t = this.ctx.currentTime;
-        // Основной тон — протяжный, как удар о стенку
         const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-        o.type = 'sine'; o.frequency.setValueAtTime(900, t); o.frequency.exponentialRampToValueAtTime(1400, t + 0.08);
-        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.06, t + 0.015); g.gain.exponentialRampToValueAtTime(0.01, t + 0.22);
-        o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + 0.28);
-        // Второй тон — выше, для "звонкости"
+        o.type = 'sine'; o.frequency.setValueAtTime(1000, t); o.frequency.exponentialRampToValueAtTime(1600, t + 0.04);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.06, t + 0.012); g.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+        o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + 0.14);
         const o2 = this.ctx.createOscillator(), g2 = this.ctx.createGain();
-        o2.type = 'sine'; o2.frequency.setValueAtTime(1400, t + 0.03); o2.frequency.exponentialRampToValueAtTime(1800, t + 0.1);
-        g2.gain.setValueAtTime(0, t + 0.03); g2.gain.linearRampToValueAtTime(0.03, t + 0.04); g2.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
-        o2.connect(g2); g2.connect(this.ctx.destination); o2.start(t + 0.03); o2.stop(t + 0.22);
+        o2.type = 'sine'; o2.frequency.setValueAtTime(1600, t + 0.02); o2.frequency.exponentialRampToValueAtTime(2100, t + 0.05);
+        g2.gain.setValueAtTime(0, t + 0.02); g2.gain.linearRampToValueAtTime(0.03, t + 0.03); g2.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        o2.connect(g2); g2.connect(this.ctx.destination); o2.start(t + 0.02); o2.stop(t + 0.12);
     }
 };
 
@@ -959,7 +959,7 @@ const SkinManager = {
                     border: 1px solid ${c.edge};
                 "></div>
                 <div class="skin-name">${skin.name}</div>
-                ${!unlocked ? `<div class="skin-price"><span class="coin-icon" style="width:12px;height:12px;"></span> ${skin.price}</div>` : ''}
+                ${!unlocked ? `<div class="skin-price"><span class="coin-icon coin-small"></span> ${skin.price}</div>` : ''}
                 ${active ? '<div class="skin-check">✓</div>' : ''}
             `;
             card.addEventListener('click', () => {
