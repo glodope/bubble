@@ -14,7 +14,7 @@
     padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
+    touch-action: none !important;
     user-select: none;
     -webkit-user-select: none;
 }
@@ -24,36 +24,43 @@ html, body {
     height: 100%;
     overflow: hidden;
     background: #0a0a1a;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #fff;
+    touch-action: none;
 }
 
 #game-container {
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
 }
 
 #game-canvas {
-    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
+    z-index: 1;
+    touch-action: none;
 }
 
 /* ===== UI LAYER ===== */
 #ui-layer {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 10;
+    z-index: 2;
 }
 
 #ui-layer .screen {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
@@ -62,17 +69,18 @@ html, body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    pointer-events: auto;
+    pointer-events: none;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 #ui-layer .screen.active {
     display: flex;
+    pointer-events: auto;
 }
 
 /* ===== GLASS PANELS ===== */
 .menu-glass {
-    background: rgba(20, 20, 40, 0.75);
+    background: rgba(20, 20, 40, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -100,7 +108,6 @@ html, body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin-bottom: 4px;
-    text-shadow: none;
     filter: drop-shadow(0 2px 8px rgba(255, 140, 0, 0.3));
 }
 
@@ -181,29 +188,10 @@ html, body {
     box-shadow: 0 4px 16px rgba(255, 69, 0, 0.3);
 }
 
-.btn-primary::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-}
-
-.btn-primary:hover::after {
-    left: 100%;
-}
-
 .btn-secondary {
     background: rgba(255, 255, 255, 0.08);
     color: rgba(255, 255, 255, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.btn-secondary:active {
-    background: rgba(255, 255, 255, 0.15);
 }
 
 .btn-back {
@@ -213,18 +201,23 @@ html, body {
     margin-top: 16px;
 }
 
-/* ===== HUD ===== */
+/* ===== HUD — ВНИЗУ ЭКРАНА ===== */
 #hud {
-    justify-content: space-between;
-    padding: 16px 20px 24px;
-    pointer-events: none;
+    justify-content: flex-end;
+    padding: 0 20px 32px;
+    pointer-events: none !important;
+}
+
+#hud * {
+    pointer-events: none !important;
 }
 
 .hud-top {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: flex-end;
     width: 100%;
+    padding-bottom: 8px;
 }
 
 .score-box, .combo-box {
@@ -235,12 +228,12 @@ html, body {
     display: block;
     font-size: 10px;
     letter-spacing: 3px;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.35);
     margin-bottom: 2px;
 }
 
 .score-value {
-    font-size: 36px;
+    font-size: 32px;
     font-weight: 900;
     color: #fff;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
@@ -259,7 +252,7 @@ html, body {
 }
 
 .combo-value {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 900;
     background: linear-gradient(135deg, #ffd700, #ff8c00);
     -webkit-background-clip: text;
@@ -273,8 +266,8 @@ html, body {
 
 .progress-bar {
     width: 100%;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.1);
+    height: 3px;
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 2px;
     overflow: hidden;
 }
@@ -314,28 +307,6 @@ html, body {
     border: 2px solid rgba(255, 100, 100, 0.5);
     position: relative;
     animation: popDead 0.6s ease;
-}
-
-.dead-bubble::before, .dead-bubble::after {
-    content: '';
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 100, 100, 0.4);
-}
-
-.dead-bubble::before {
-    width: 30px;
-    height: 30px;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.dead-bubble::after {
-    width: 20px;
-    height: 20px;
-    bottom: -8px;
-    left: 30%;
 }
 
 @keyframes popDead {
@@ -413,6 +384,7 @@ html, body {
     transition: all 0.2s ease;
     position: relative;
     padding: 8px;
+    pointer-events: auto;
 }
 
 .skin-card.active {
@@ -537,48 +509,8 @@ html, body {
     .game-title { font-size: 48px; }
 }
 
-/* ===== HIDE SCROLLBAR ===== */
 .skins-glass::-webkit-scrollbar { display: none; }
 .skins-glass { -ms-overflow-style: none; scrollbar-width: none; }
-
-
-/* ===== CRITICAL TOUCH FIXES ===== */
-#game-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    touch-action: none;
-}
-
-#ui-layer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 2;
-}
-
-#ui-layer .screen {
-    position: fixed;
-    pointer-events: none;
-}
-
-#ui-layer .screen.active {
-    pointer-events: auto;
-}
-
-#hud {
-    pointer-events: none !important;
-}
-
-#hud * {
-    pointer-events: none !important;
-}
 
     </style>
 </head>
@@ -679,7 +611,7 @@ html, body {
     </div>
 
     <script>
-// ===== CORE ENGINE =====
+// ===== CORE ENGINE v4 =====
 const Game = {
     canvas: null,
     ctx: null,
@@ -873,16 +805,8 @@ const Game = {
         ctx.clearRect(0, 0, w, h);
         this.drawBackground(ctx, w, h);
 
-        if (this.state === 'playing') {
-            this.drawTapZones(ctx, w, h);
-        }
-
         ctx.save();
         ctx.translate(0, -this.camera.y);
-
-        if (this.world) {
-            this.world.renderBackground(ctx, w, h, this.camera.y);
-        }
 
         this.glass.renderBack(ctx, this.camera.y);
 
@@ -903,36 +827,57 @@ const Game = {
     },
 
     drawBackground(ctx, w, h) {
+        // Анимированный градиент жидкости — меняется со временем
+        const time = Date.now() * 0.0003;
+        const hueShift = Math.sin(time) * 10; // лёгкий сдвиг тона
+
         const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0, '#1a0f00');
-        grad.addColorStop(0.3, '#2d1a05');
-        grad.addColorStop(0.7, '#4a2e0a');
-        grad.addColorStop(1, '#0a0a1a');
+        grad.addColorStop(0, `hsl(${35 + hueShift}, 60%, 8%)`);
+        grad.addColorStop(0.25, `hsl(${38 + hueShift}, 55%, 12%)`);
+        grad.addColorStop(0.5, `hsl(${42 + hueShift}, 50%, 16%)`);
+        grad.addColorStop(0.75, `hsl(${45 + hueShift}, 45%, 12%)`);
+        grad.addColorStop(1, `hsl(${30 + hueShift}, 70%, 6%)`);
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, w, h);
-    },
 
-    drawTapZones(ctx, w, h) {
-        const zoneAlpha = 0.03;
-        ctx.fillStyle = `rgba(100, 200, 255, ${this.isPressed && this.touchSide === 'left' ? 0.08 : zoneAlpha})`;
-        ctx.fillRect(0, 0, w/2, h);
-        ctx.fillStyle = `rgba(100, 200, 255, ${this.isPressed && this.touchSide === 'right' ? 0.08 : zoneAlpha})`;
-        ctx.fillRect(w/2, 0, w/2, h);
+        // Световые лучи — плавно движущиеся полосы
+        const rayCount = 5;
+        for (let i = 0; i < rayCount; i++) {
+            const phase = time * 0.5 + i * 1.2;
+            const x = w * (0.2 + 0.6 * ((Math.sin(phase * 0.7) + 1) / 2));
+            const alpha = 0.015 + Math.sin(phase) * 0.008;
+            const width = 40 + Math.sin(phase * 1.3) * 20;
 
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([5, 10]);
-        ctx.beginPath();
-        ctx.moveTo(w/2, 0);
-        ctx.lineTo(w/2, h);
-        ctx.stroke();
-        ctx.setLineDash([]);
+            const rayGrad = ctx.createLinearGradient(x - width/2, 0, x + width/2, 0);
+            rayGrad.addColorStop(0, 'rgba(255, 220, 150, 0)');
+            rayGrad.addColorStop(0.5, `rgba(255, 200, 100, ${alpha})`);
+            rayGrad.addColorStop(1, 'rgba(255, 220, 150, 0)');
+
+            ctx.fillStyle = rayGrad;
+            ctx.fillRect(x - width/2, 0, width, h);
+        }
+
+        // Медленно плывущие "пласты" жидкости
+        for (let i = 0; i < 3; i++) {
+            const y = (time * 30 + i * h/3) % (h + 100) - 50;
+            const waveAlpha = 0.02 + Math.sin(time + i) * 0.01;
+            ctx.fillStyle = `rgba(255, 180, 60, ${waveAlpha})`;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            for (let x = 0; x <= w; x += 20) {
+                ctx.lineTo(x, y + Math.sin(x * 0.01 + time + i) * 15);
+            }
+            ctx.lineTo(w, y + 40);
+            ctx.lineTo(0, y + 40);
+            ctx.closePath();
+            ctx.fill();
+        }
     },
 
     drawVignette(ctx, w, h) {
         const grad = ctx.createRadialGradient(w/2, h/2, h*0.3, w/2, h/2, h*0.8);
         grad.addColorStop(0, 'rgba(0,0,0,0)');
-        grad.addColorStop(1, 'rgba(0,0,0,0.4)');
+        grad.addColorStop(1, 'rgba(0,0,0,0.5)');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, w, h);
     },
@@ -992,6 +937,7 @@ class Bubble {
         this.wobblePhase = 0;
         this.baseSpeed = 120;
         this.maxSpeed = 350;
+        this.glowIntensity = 0;
         this.resize();
     }
 
@@ -1011,6 +957,7 @@ class Bubble {
         this.stuckSide = null;
         this.dead = false;
         this.wobblePhase = 0;
+        this.glowIntensity = 0;
     }
 
     stick(side) {
@@ -1018,6 +965,7 @@ class Bubble {
 
         this.state = 'stuck';
         this.stuckSide = side;
+        this.glowIntensity = 1.0;
 
         Game.combo++;
         if (Game.combo > Game.maxCombo) Game.maxCombo = Game.combo;
@@ -1038,13 +986,12 @@ class Bubble {
         if (this.state !== 'stuck' || this.dead) return;
 
         this.state = 'floating';
+        this.glowIntensity = 0.6;
 
-        // НЕТ возврата в центр — просто отлипаем и летим дальше
-        // Небольшой импульс от стены
         if (this.stuckSide === 'left') {
-            this.vx = 15;
+            this.vx = 12;
         } else {
-            this.vx = -15;
+            this.vx = -12;
         }
 
         this.stuckSide = null;
@@ -1061,15 +1008,21 @@ class Bubble {
 
         this.wobblePhase += dt * 3;
 
+        // Затухание glow
+        if (this.glowIntensity > 0) {
+            this.glowIntensity -= dt * 2;
+            if (this.glowIntensity < 0) this.glowIntensity = 0;
+        }
+
         const glass = Game.glass;
         const speed = Math.min(this.baseSpeed + Game.score * 1.5, this.maxSpeed);
 
         if (this.state === 'floating') {
             this.vy = -speed;
 
-            // МЕДЛЕННОЕ боковое покачивание
-            this.vx += Math.sin(this.wobblePhase) * 20 * dt;
-            this.vx *= 0.95;
+            // ОЧЕНЬ плавное боковое покачивание
+            this.vx += Math.sin(this.wobblePhase) * 8 * dt;
+            this.vx *= 0.97;
 
             this.x += this.vx * dt;
             this.y += this.vy * dt;
@@ -1085,7 +1038,6 @@ class Bubble {
             }
 
         } else if (this.state === 'stuck') {
-            // ЗАМЕДЛЕНИЕ в 2 раза вместо остановки
             this.vy = -speed * 0.5;
             this.vx = 0;
 
@@ -1119,13 +1071,29 @@ class Bubble {
         ctx.translate(x, y);
         ctx.scale(scaleX, scaleY);
 
+        // Внешнее свечение при прилипании/отлипании
+        if (this.glowIntensity > 0) {
+            const glowR = r + 8 + this.glowIntensity * 12;
+            const glowGrad = ctx.createRadialGradient(0, 0, r, 0, 0, glowR);
+            const skin = SkinManager.get(r);
+            glowGrad.addColorStop(0, skin.glow || 'rgba(100, 200, 255, 0.3)');
+            glowGrad.addColorStop(1, 'rgba(100, 200, 255, 0)');
+            ctx.globalAlpha = this.glowIntensity * 0.6;
+            ctx.fillStyle = glowGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+
+        // Радужный ободок
         ctx.beginPath();
         ctx.arc(0, 0, r + 2, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(200, 230, 255, 0.15)';
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        const skin = SkinManager.get(this.radius);
+        const skin = SkinManager.get(r);
         const grad = ctx.createRadialGradient(-r*0.3, -r*0.3, r*0.1, 0, 0, r);
         grad.addColorStop(0, skin.highlight);
         grad.addColorStop(0.3, skin.main);
@@ -1170,17 +1138,6 @@ class Glass {
         this.width = 0;
         this.wallThickness = 8;
         this.resize();
-
-        this.causticPoints = [];
-        for (let i = 0; i < 12; i++) {
-            this.causticPoints.push({
-                x: Math.random(),
-                y: Math.random() * 2000,
-                size: 20 + Math.random() * 60,
-                speed: 0.5 + Math.random() * 1.5,
-                phase: Math.random() * Math.PI * 2
-            });
-        }
     }
 
     resize() {
@@ -1194,32 +1151,16 @@ class Glass {
         const topY = cameraY - 100;
         const bottomY = cameraY + h + 100;
 
-        ctx.save();
-        ctx.globalCompositeOperation = 'screen';
-        this.causticPoints.forEach(p => {
-            const px = this.leftX + p.x * this.width;
-            const py = p.y - cameraY * 0.3;
-            const wave = Math.sin(Date.now() * 0.001 * p.speed + p.phase);
-            const alpha = 0.03 + wave * 0.02;
-
-            const grad = ctx.createRadialGradient(px, py, 0, px, py, p.size);
-            grad.addColorStop(0, `rgba(255, 220, 150, ${alpha})`);
-            grad.addColorStop(1, 'rgba(255, 220, 150, 0)');
-
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.arc(px, py, p.size, 0, Math.PI*2);
-            ctx.fill();
-        });
-        ctx.restore();
-
-        ctx.fillStyle = 'rgba(200, 220, 255, 0.04)';
+        // Внутренняя часть стакана — тёмная жидкость
+        ctx.fillStyle = 'rgba(20, 15, 5, 0.3)';
         ctx.fillRect(this.leftX, topY, this.width, bottomY - topY);
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+        // Стенки — полупрозрачные
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
         ctx.fillRect(this.leftX - this.wallThickness/2, topY, this.wallThickness, bottomY - topY);
         ctx.fillRect(this.rightX - this.wallThickness/2, topY, this.wallThickness, bottomY - topY);
 
+        // Дно стакана
         const bottomCurve = 30;
         ctx.beginPath();
         ctx.moveTo(this.leftX, bottomY - bottomCurve);
@@ -1230,7 +1171,7 @@ class Glass {
         ctx.lineTo(this.rightX, bottomY - bottomCurve - 20);
         ctx.lineTo(this.leftX, bottomY - bottomCurve - 20);
         ctx.closePath();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
         ctx.fill();
     }
 
@@ -1241,14 +1182,16 @@ class Glass {
 
         const time = Date.now() * 0.001;
 
+        // Блики на стенках
         const leftShine = Math.sin(time * 0.7) * 0.5 + 0.5;
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.08 * leftShine})`;
-        ctx.fillRect(this.leftX + 2, topY, 4, bottomY - topY);
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.06 * leftShine})`;
+        ctx.fillRect(this.leftX + 2, topY, 3, bottomY - topY);
 
-        const rightShine = Math.sin(time * 0.7 + 1) * 0.5 + 0.5;
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.06 * rightShine})`;
-        ctx.fillRect(this.rightX - 6, topY, 3, bottomY - topY);
+        const rightShine = Math.sin(time * 0.7 + 1.5) * 0.5 + 0.5;
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.04 * rightShine})`;
+        ctx.fillRect(this.rightX - 5, topY, 2, bottomY - topY);
 
+        // Верхний ободок
         ctx.beginPath();
         ctx.ellipse(
             this.leftX + this.width/2, 
@@ -1257,10 +1200,11 @@ class Glass {
             6, 
             0, 0, Math.PI*2
         );
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
+        // Обводка стенок
         ctx.beginPath();
         ctx.moveTo(this.leftX, topY);
         ctx.lineTo(this.leftX, bottomY - 30);
@@ -1268,7 +1212,7 @@ class Glass {
         ctx.moveTo(this.rightX, topY);
         ctx.lineTo(this.rightX, bottomY - 30);
         ctx.quadraticCurveTo(this.rightX, bottomY, this.rightX - 15, bottomY);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
         ctx.lineWidth = 1;
         ctx.stroke();
     }
@@ -1313,25 +1257,12 @@ class Camera {
     </script>
     <script>
 // ===== WORLD =====
-// Препятствия, частицы, фоновые эффекты
-
 class World {
     constructor() {
         this.obstacles = [];
         this.particles = [];
-        this.bgBubbles = [];
         this.lastSpawnY = -200;
         this.spawnDistance = 250;
-
-        for (let i = 0; i < 30; i++) {
-            this.bgBubbles.push({
-                x: Math.random(),
-                y: Math.random() * 3000 - 1000,
-                size: 2 + Math.random() * 6,
-                speed: 20 + Math.random() * 40,
-                wobble: Math.random() * Math.PI * 2
-            });
-        }
     }
 
     reset() {
@@ -1362,19 +1293,18 @@ class World {
         }
 
         this.updateParticles(dt);
-        this.updateBgBubbles(dt, cameraY);
 
         // След за пузырьком
         if (Game.settings.particles && bubble.state === 'floating' && !bubble.dead) {
-            if (Math.random() < 0.3) {
+            if (Math.random() < 0.25) {
                 this.particles.push({
-                    x: bubble.x + (Math.random() - 0.5) * 10,
-                    y: bubble.y + bubble.radius + 5,
-                    vx: (Math.random() - 0.5) * 20,
-                    vy: 10 + Math.random() * 20,
-                    life: 0.5 + Math.random() * 0.5,
-                    size: 2 + Math.random() * 3,
-                    color: 'rgba(255, 255, 255, 0.3)',
+                    x: bubble.x + (Math.random() - 0.5) * 8,
+                    y: bubble.y + bubble.radius + 3,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: 8 + Math.random() * 15,
+                    life: 0.4 + Math.random() * 0.4,
+                    size: 1.5 + Math.random() * 2.5,
+                    color: 'rgba(255, 255, 255, 0.25)',
                     type: 'trail'
                 });
             }
@@ -1396,17 +1326,6 @@ class World {
         this.particles = this.particles.filter(p => p.life > 0);
     }
 
-    updateBgBubbles(dt, cameraY) {
-        this.bgBubbles.forEach(b => {
-            b.y -= b.speed * dt;
-            b.wobble += dt * 2;
-            if (b.y < cameraY - Game.height) {
-                b.y = cameraY + Game.height + Math.random() * 500;
-                b.x = Math.random();
-            }
-        });
-    }
-
     spawnObstacle(y) {
         const glass = Game.glass;
         let availableTypes = ['ice', 'lemon'];
@@ -1414,7 +1333,7 @@ class World {
         if (Game.score > 60) availableTypes.push('straw');
 
         const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-        const x = glass.leftX + 30 + Math.random() * (glass.width - 60);
+        const x = glass.leftX + 40 + Math.random() * (glass.width - 80);
 
         let obs;
         switch(type) {
@@ -1431,18 +1350,7 @@ class World {
     }
 
     renderBackground(ctx, w, h, cameraY) {
-        ctx.save();
-        this.bgBubbles.forEach(b => {
-            const bx = Game.glass.leftX + b.x * Game.glass.width;
-            const by = b.y;
-            const offset = Math.sin(b.wobble) * 10;
-
-            ctx.beginPath();
-            ctx.arc(bx + offset, by, b.size, 0, Math.PI*2);
-            ctx.fillStyle = `rgba(255, 255, 255, ${0.08 + Math.sin(b.wobble)*0.04})`;
-            ctx.fill();
-        });
-        ctx.restore();
+        // Убраны рандомные bgBubbles — фон теперь в drawBackground
     }
 
     renderObstacles(ctx, cameraY) {
@@ -1479,16 +1387,16 @@ class World {
     createStickEffect(x, y, side) {
         if (!Game.settings.particles) return;
         const dir = side === 'left' ? 1 : -1;
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 6; i++) {
             this.particles.push({
-                x: x + dir * 10,
-                y: y + (Math.random() - 0.5) * 20,
-                vx: dir * (20 + Math.random() * 40),
-                vy: (Math.random() - 0.5) * 40,
-                life: 0.3 + Math.random() * 0.3,
-                maxLife: 0.6,
-                size: 2 + Math.random() * 3,
-                color: 'rgba(200, 230, 255, 0.6)',
+                x: x + dir * 8,
+                y: y + (Math.random() - 0.5) * 16,
+                vx: dir * (15 + Math.random() * 30),
+                vy: (Math.random() - 0.5) * 30,
+                life: 0.25 + Math.random() * 0.25,
+                maxLife: 0.5,
+                size: 1.5 + Math.random() * 2.5,
+                color: 'rgba(200, 230, 255, 0.5)',
                 type: 'splash'
             });
         }
@@ -1496,16 +1404,16 @@ class World {
 
     createReleaseEffect(x, y) {
         if (!Game.settings.particles) return;
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 4; i++) {
             this.particles.push({
-                x: x + (Math.random() - 0.5) * 20,
-                y: y + 10,
-                vx: (Math.random() - 0.5) * 30,
-                vy: 20 + Math.random() * 30,
-                life: 0.4 + Math.random() * 0.3,
-                maxLife: 0.7,
-                size: 2 + Math.random() * 4,
-                color: 'rgba(255, 255, 255, 0.4)',
+                x: x + (Math.random() - 0.5) * 16,
+                y: y + 8,
+                vx: (Math.random() - 0.5) * 25,
+                vy: 15 + Math.random() * 25,
+                life: 0.3 + Math.random() * 0.25,
+                maxLife: 0.55,
+                size: 1.5 + Math.random() * 3,
+                color: 'rgba(255, 255, 255, 0.35)',
                 type: 'splash'
             });
         }
@@ -1573,15 +1481,24 @@ class Obstacle {
 class IceCube extends Obstacle {
     constructor(x, y) {
         super(x, y);
-        this.size = 25 + Math.random() * 15;
-        this.rotSpeed = (Math.random() - 0.5) * 1.5;
+        this.size = 28 + Math.random() * 14;
+        this.rotSpeed = (Math.random() - 0.5) * 1.2;
         this.floatPhase = Math.random() * Math.PI * 2;
+        // Внутренние пузырьки воздуха в льду
+        this.bubbles = [];
+        for (let i = 0; i < 4; i++) {
+            this.bubbles.push({
+                bx: (Math.random() - 0.5) * 0.6,
+                by: (Math.random() - 0.5) * 0.6,
+                br: 0.08 + Math.random() * 0.12
+            });
+        }
     }
 
     update(dt) {
         super.update(dt);
-        this.floatPhase += dt * 2;
-        this.y += Math.sin(this.floatPhase) * 10 * dt;
+        this.floatPhase += dt * 1.8;
+        this.y += Math.sin(this.floatPhase) * 8 * dt;
     }
 
     render(ctx) {
@@ -1589,36 +1506,75 @@ class IceCube extends Obstacle {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
 
-        const s = this.size; // ИСПРАВЛЕНО: полный размер
+        const s = this.size;
+        const half = s / 2;
 
-        ctx.fillStyle = 'rgba(200, 230, 255, 0.35)';
-        ctx.fillRect(-s/2, -s/2, s, s);
+        // Тень/основание
+        ctx.fillStyle = 'rgba(150, 200, 230, 0.15)';
+        ctx.fillRect(-half - 2, -half - 2, s + 4, s + 4);
 
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        // Основной куб с градиентом
+        const grad = ctx.createLinearGradient(-half, -half, half, half);
+        grad.addColorStop(0, 'rgba(220, 240, 255, 0.45)');
+        grad.addColorStop(0.5, 'rgba(180, 220, 250, 0.35)');
+        grad.addColorStop(1, 'rgba(140, 200, 240, 0.25)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(-half, -half, s, s);
+
+        // Грани — яркие
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 1.5;
-        ctx.strokeRect(-s/2, -s/2, s, s);
+        ctx.strokeRect(-half, -half, s, s);
 
-        ctx.beginPath();
-        ctx.moveTo(-s*0.2, -s*0.1);
-        ctx.lineTo(s*0.1, s*0.2);
-        ctx.lineTo(s*0.3, -s*0.1);
+        // Внутренние грани (3D эффект)
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(-half + s*0.3, -half);
+        ctx.lineTo(-half + s*0.3, half);
+        ctx.moveTo(-half, -half + s*0.4);
+        ctx.lineTo(half, -half + s*0.4);
         ctx.stroke();
 
+        // Внутренние пузырьки воздуха
+        this.bubbles.forEach(b => {
+            ctx.beginPath();
+            ctx.arc(b.bx * s, b.by * s, b.br * s, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            // Блик в пузырьке
+            ctx.beginPath();
+            ctx.arc(b.bx * s - b.br*s*0.2, b.by * s - b.br*s*0.2, b.br*s*0.3, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.fill();
+        });
+
+        // Главный блик на верхнем ребре
         ctx.beginPath();
-        ctx.moveTo(-s/2, -s/2);
-        ctx.lineTo(-s/2 + s*0.3, -s/2);
-        ctx.lineTo(-s/2, -s/2 + s*0.3);
+        ctx.moveTo(-half, -half);
+        ctx.lineTo(-half + s*0.4, -half);
+        ctx.lineTo(-half, -half + s*0.4);
         ctx.closePath();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.fill();
+
+        // Боковой блик
+        ctx.beginPath();
+        ctx.moveTo(half, half);
+        ctx.lineTo(half - s*0.3, half);
+        ctx.lineTo(half, half - s*0.3);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
         ctx.fill();
 
         ctx.restore();
     }
 
     checkCollision(bubble) {
-        const s = this.size / 2; // Половина для коллизии
+        const s = this.size / 2;
         const cos = Math.cos(-this.rotation);
         const sin = Math.sin(-this.rotation);
 
@@ -1640,14 +1596,14 @@ class IceCube extends Obstacle {
 class LemonSlice extends Obstacle {
     constructor(x, y) {
         super(x, y);
-        this.radius = 22 + Math.random() * 12;
-        this.rotSpeed = (Math.random() - 0.5) * 3;
+        this.radius = 24 + Math.random() * 10;
+        this.rotSpeed = (Math.random() - 0.5) * 2.5;
         this.pulsePhase = Math.random() * Math.PI * 2;
     }
 
     update(dt) {
         super.update(dt);
-        this.pulsePhase += dt * 3;
+        this.pulsePhase += dt * 2.5;
     }
 
     render(ctx) {
@@ -1656,35 +1612,60 @@ class LemonSlice extends Obstacle {
         ctx.rotate(this.rotation);
 
         const r = this.radius;
-        const pulse = 1 + Math.sin(this.pulsePhase) * 0.05;
+        const pulse = 1 + Math.sin(this.pulsePhase) * 0.04;
 
+        // Кожура — тёмно-жёлтая
         ctx.beginPath();
         ctx.arc(0, 0, r * pulse, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffd700';
+        ctx.fillStyle = '#e6c200';
         ctx.fill();
-        ctx.strokeStyle = '#e6c200';
+        ctx.strokeStyle = '#cc9900';
         ctx.lineWidth = 2;
         ctx.stroke();
 
+        // Альбедо (белый слой)
         ctx.beginPath();
-        ctx.arc(0, 0, r * 0.85 * pulse, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffec8b';
+        ctx.arc(0, 0, r * 0.9 * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff8dc';
         ctx.fill();
 
-        const segments = 8;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.lineWidth = 1;
+        // Мякоть — ярко-жёлтая
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.82 * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffe135';
+        ctx.fill();
+
+        // Дольки
+        const segments = 9;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 1.2;
         for (let i = 0; i < segments; i++) {
             const angle = (Math.PI * 2 / segments) * i;
             ctx.beginPath();
             ctx.moveTo(0, 0);
-            ctx.lineTo(Math.cos(angle) * r * 0.8, Math.sin(angle) * r * 0.8);
+            ctx.lineTo(Math.cos(angle) * r * 0.78, Math.sin(angle) * r * 0.78);
             ctx.stroke();
+
+            // Сочность — градиент в каждой дольке
+            const nextAngle = (Math.PI * 2 / segments) * (i + 1);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, r * 0.75, angle + 0.05, nextAngle - 0.05);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255, 240, 150, 0.15)';
+            ctx.fill();
         }
 
+        // Центр
         ctx.beginPath();
-        ctx.arc(0, 0, r * 0.1, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.arc(0, 0, r * 0.12, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.fill();
+
+        // Блик на кожуре
+        ctx.beginPath();
+        ctx.arc(-r*0.5, -r*0.5, r*0.15, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.fill();
 
         ctx.restore();
@@ -1701,16 +1682,15 @@ class LemonSlice extends Obstacle {
 class Straw extends Obstacle {
     constructor(x, y) {
         super(x, y);
-        this.width = 12;
-        this.height = 80 + Math.random() * 40;
-        this.rotSpeed = (Math.random() - 0.5) * 1;
+        this.width = 10;
+        this.height = 70 + Math.random() * 35;
+        this.rotSpeed = (Math.random() - 0.5) * 0.8;
         this.tiltPhase = Math.random() * Math.PI * 2;
     }
 
     update(dt) {
-        // ИСПРАВЛЕНО: не вызываем super.update, чтобы избежать двойного вращения
-        this.tiltPhase += dt * 1.5;
-        this.rotation += this.rotSpeed * dt + Math.sin(this.tiltPhase) * 0.5 * dt;
+        this.tiltPhase += dt * 1.2;
+        this.rotation += this.rotSpeed * dt + Math.sin(this.tiltPhase) * 0.4 * dt;
     }
 
     render(ctx) {
@@ -1721,20 +1701,33 @@ class Straw extends Obstacle {
         const w = this.width;
         const h = this.height;
 
-        const stripeCount = Math.floor(h / 10);
+        // Тень
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fillRect(-w/2 + 2, -h/2 + 2, w, h);
+
+        // Полоски
+        const stripeCount = Math.floor(h / 8);
         for (let i = 0; i < stripeCount; i++) {
-            const sy = -h/2 + i * 10;
-            const color = i % 2 === 0 ? '#ff4444' : '#ffffff';
+            const sy = -h/2 + i * 8;
+            const color = i % 2 === 0 ? '#ff5555' : '#ffffff';
             ctx.fillStyle = color;
-            ctx.fillRect(-w/2, sy, w, 10);
+            ctx.fillRect(-w/2, sy, w, 8);
         }
 
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+        // Обводка
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
         ctx.lineWidth = 1;
         ctx.strokeRect(-w/2, -h/2, w, h);
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(-w/2 + 2, -h/2, 3, h);
+        // Блик
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.fillRect(-w/2 + 1.5, -h/2, 2.5, h);
+
+        // Верхний срез (овал)
+        ctx.beginPath();
+        ctx.ellipse(0, -h/2, w/2, 3, 0, 0, Math.PI*2);
+        ctx.fillStyle = '#ff5555';
+        ctx.fill();
 
         ctx.restore();
     }
@@ -1757,59 +1750,75 @@ class Straw extends Obstacle {
 class MintLeaf extends Obstacle {
     constructor(x, y) {
         super(x, y);
-        this.size = 20 + Math.random() * 10;
-        this.rotSpeed = (Math.random() - 0.5) * 2;
+        this.size = 22 + Math.random() * 10;
+        this.rotSpeed = (Math.random() - 0.5) * 1.8;
         this.swayPhase = Math.random() * Math.PI * 2;
     }
 
     update(dt) {
         super.update(dt);
-        this.swayPhase += dt * 2;
-        this.x += Math.sin(this.swayPhase) * 15 * dt;
+        this.swayPhase += dt * 1.8;
+        this.x += Math.sin(this.swayPhase) * 12 * dt;
 
-        // ИСПРАВЛЕНО: ограничиваем движение мяты стенками стакана
         const glass = Game.glass;
         const margin = this.size;
-        if (this.x < glass.leftX + margin) {
-            this.x = glass.leftX + margin;
-        }
-        if (this.x > glass.rightX - margin) {
-            this.x = glass.rightX - margin;
-        }
+        if (this.x < glass.leftX + margin) this.x = glass.leftX + margin;
+        if (this.x > glass.rightX - margin) this.x = glass.rightX - margin;
     }
 
     render(ctx) {
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation + Math.sin(this.swayPhase) * 0.3);
+        ctx.rotate(this.rotation + Math.sin(this.swayPhase) * 0.25);
 
         const s = this.size;
 
+        // Тень
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
         ctx.beginPath();
-        ctx.ellipse(0, 0, s * 0.5, s, 0, 0, Math.PI * 2);
-        ctx.fillStyle = '#4caf50';
+        ctx.ellipse(2, 2, s * 0.5, s * 0.95, 0, 0, Math.PI * 2);
         ctx.fill();
 
+        // Основной лист — градиент
+        const leafGrad = ctx.createLinearGradient(0, -s, 0, s);
+        leafGrad.addColorStop(0, '#66bb6a');
+        leafGrad.addColorStop(0.5, '#4caf50');
+        leafGrad.addColorStop(1, '#388e3c');
+
         ctx.beginPath();
-        ctx.moveTo(0, -s);
-        ctx.lineTo(0, s);
-        ctx.strokeStyle = '#388e3c';
+        ctx.ellipse(0, 0, s * 0.5, s, 0, 0, Math.PI * 2);
+        ctx.fillStyle = leafGrad;
+        ctx.fill();
+
+        // Обводка
+        ctx.strokeStyle = '#2e7d32';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Центральная жилка
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.9);
+        ctx.lineTo(0, s * 0.9);
+        ctx.strokeStyle = '#2e7d32';
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        for (let i = -0.6; i <= 0.6; i += 0.3) {
+        // Боковые жилки
+        for (let i = -0.7; i <= 0.7; i += 0.35) {
+            const yPos = i * s;
             ctx.beginPath();
-            ctx.moveTo(0, i * s);
-            ctx.lineTo(s * 0.3, i * s + s * 0.2);
-            ctx.moveTo(0, i * s);
-            ctx.lineTo(-s * 0.3, i * s + s * 0.2);
-            ctx.strokeStyle = 'rgba(56, 142, 60, 0.5)';
-            ctx.lineWidth = 0.8;
+            ctx.moveTo(0, yPos);
+            ctx.quadraticCurveTo(s * 0.25, yPos + s * 0.15, s * 0.4, yPos + s * 0.3);
+            ctx.moveTo(0, yPos);
+            ctx.quadraticCurveTo(-s * 0.25, yPos + s * 0.15, -s * 0.4, yPos + s * 0.3);
+            ctx.strokeStyle = 'rgba(46, 125, 50, 0.4)';
+            ctx.lineWidth = 0.7;
             ctx.stroke();
         }
 
+        // Блик
         ctx.beginPath();
-        ctx.ellipse(-s*0.1, -s*0.3, s*0.15, s*0.4, -0.3, 0, Math.PI*2);
+        ctx.ellipse(-s*0.08, -s*0.35, s*0.12, s*0.35, -0.3, 0, Math.PI*2);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.fill();
 
@@ -1826,10 +1835,7 @@ class MintLeaf extends Obstacle {
 
     </script>
     <script>
-// ===== AUDIO ENGINE =====
-// Синтезированные звуки через Web Audio API
-// Переименован в AudioEngine чтобы избежать конфликтов
-
+// ===== AUDIO ENGINE v4 =====
 const AudioEngine = {
     ctx: null,
     enabled: true,
@@ -1856,39 +1862,60 @@ const AudioEngine = {
 
     playStick() {
         const t = this.ctx.currentTime;
+
+        // Мягкий "плюх" — низкая частота с быстрым спадом
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         const filter = this.ctx.createBiquadFilter();
 
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(200, t);
-        osc.frequency.exponentialRampToValueAtTime(80, t + 0.1);
+        osc.frequency.setValueAtTime(180, t);
+        osc.frequency.exponentialRampToValueAtTime(60, t + 0.12);
 
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(800, t);
-        filter.frequency.exponentialRampToValueAtTime(200, t + 0.1);
+        filter.frequency.setValueAtTime(600, t);
+        filter.frequency.exponentialRampToValueAtTime(150, t + 0.1);
+        filter.Q.setValueAtTime(2, t);
 
-        gain.gain.setValueAtTime(0.3, t);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.35, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
 
         osc.connect(filter);
         filter.connect(gain);
         gain.connect(this.ctx.destination);
 
         osc.start(t);
-        osc.stop(t + 0.12);
+        osc.stop(t + 0.18);
+
+        // Второй тон — "всплеск"
+        const osc2 = this.ctx.createOscillator();
+        const gain2 = this.ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(350, t + 0.03);
+        osc2.frequency.exponentialRampToValueAtTime(120, t + 0.1);
+        gain2.gain.setValueAtTime(0, t + 0.03);
+        gain2.gain.linearRampToValueAtTime(0.12, t + 0.05);
+        gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.14);
+        osc2.connect(gain2);
+        gain2.connect(this.ctx.destination);
+        osc2.start(t + 0.03);
+        osc2.stop(t + 0.15);
     },
 
     playRelease() {
         const t = this.ctx.currentTime;
+
+        // Лёгкий "бульк" — пузырёк отрывается
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
 
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(300, t);
-        osc.frequency.exponentialRampToValueAtTime(500, t + 0.08);
+        osc.frequency.setValueAtTime(280, t);
+        osc.frequency.exponentialRampToValueAtTime(500, t + 0.06);
 
-        gain.gain.setValueAtTime(0.15, t);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.18, t + 0.015);
         gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
 
         osc.connect(gain);
@@ -1897,31 +1924,35 @@ const AudioEngine = {
         osc.start(t);
         osc.stop(t + 0.12);
 
+        // Второй пузырёк
         setTimeout(() => {
             if (!this.ctx) return;
             const t2 = this.ctx.currentTime;
             const osc2 = this.ctx.createOscillator();
             const gain2 = this.ctx.createGain();
             osc2.type = 'sine';
-            osc2.frequency.setValueAtTime(400, t2);
-            osc2.frequency.exponentialRampToValueAtTime(600, t2 + 0.05);
-            gain2.gain.setValueAtTime(0.1, t2);
-            gain2.gain.exponentialRampToValueAtTime(0.01, t2 + 0.06);
+            osc2.frequency.setValueAtTime(420, t2);
+            osc2.frequency.exponentialRampToValueAtTime(650, t2 + 0.04);
+            gain2.gain.setValueAtTime(0, t2);
+            gain2.gain.linearRampToValueAtTime(0.1, t2 + 0.01);
+            gain2.gain.exponentialRampToValueAtTime(0.01, t2 + 0.07);
             osc2.connect(gain2);
             gain2.connect(this.ctx.destination);
             osc2.start(t2);
-            osc2.stop(t2 + 0.08);
-        }, 40);
+            osc2.stop(t2 + 0.1);
+        }, 50);
     },
 
     playPop() {
         const t = this.ctx.currentTime;
 
-        const bufferSize = this.ctx.sampleRate * 0.15;
+        // Мощный шумовой взрыв
+        const bufferSize = this.ctx.sampleRate * 0.2;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+            const env = Math.pow(1 - i / bufferSize, 1.5);
+            data[i] = (Math.random() * 2 - 1) * env;
         }
 
         const noise = this.ctx.createBufferSource();
@@ -1929,29 +1960,44 @@ const AudioEngine = {
 
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(2000, t);
-        filter.Q.setValueAtTime(1, t);
+        filter.frequency.setValueAtTime(3000, t);
+        filter.frequency.exponentialRampToValueAtTime(800, t + 0.15);
+        filter.Q.setValueAtTime(1.5, t);
 
         const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.4, t);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+        gain.gain.setValueAtTime(0.5, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
 
         noise.connect(filter);
         filter.connect(gain);
         gain.connect(this.ctx.destination);
         noise.start(t);
 
+        // Хруст — высокочастотный
         const osc = this.ctx.createOscillator();
         const oscGain = this.ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(3000, t);
-        osc.frequency.exponentialRampToValueAtTime(100, t + 0.1);
-        oscGain.gain.setValueAtTime(0.1, t);
-        oscGain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        osc.frequency.setValueAtTime(4000, t);
+        osc.frequency.exponentialRampToValueAtTime(200, t + 0.15);
+        oscGain.gain.setValueAtTime(0.15, t);
+        oscGain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
         osc.connect(oscGain);
         oscGain.connect(this.ctx.destination);
         osc.start(t);
-        osc.stop(t + 0.12);
+        osc.stop(t + 0.18);
+
+        // Низкий "бух"
+        const osc3 = this.ctx.createOscillator();
+        const gain3 = this.ctx.createGain();
+        osc3.type = 'sine';
+        osc3.frequency.setValueAtTime(100, t);
+        osc3.frequency.exponentialRampToValueAtTime(30, t + 0.2);
+        gain3.gain.setValueAtTime(0.3, t);
+        gain3.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+        osc3.connect(gain3);
+        gain3.connect(this.ctx.destination);
+        osc3.start(t);
+        osc3.stop(t + 0.3);
     },
 
     playCombo() {
@@ -1965,11 +2011,11 @@ const AudioEngine = {
             osc.frequency.setValueAtTime(freq, t + i * 0.08);
             gain.gain.setValueAtTime(0, t + i * 0.08);
             gain.gain.linearRampToValueAtTime(0.15, t + i * 0.08 + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.08 + 0.2);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.08 + 0.25);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start(t + i * 0.08);
-            osc.stop(t + i * 0.08 + 0.25);
+            osc.stop(t + i * 0.08 + 0.3);
         });
     }
 };
@@ -1979,25 +2025,32 @@ const SkinManager = {
     list: [
         { id: 'default', name: 'Классик', price: 0, 
           colors: { main: 'rgba(100, 200, 255, 0.3)', highlight: 'rgba(255, 255, 255, 0.8)', 
-                   shadow: 'rgba(50, 100, 200, 0.2)', edge: 'rgba(100, 200, 255, 0.1)', innerGlow: 'rgba(150, 220, 255, 0.15)' }},
+                   shadow: 'rgba(50, 100, 200, 0.2)', edge: 'rgba(100, 200, 255, 0.1)', 
+                   innerGlow: 'rgba(150, 220, 255, 0.15)', glow: 'rgba(100, 200, 255, 0.3)' }},
         { id: 'gold', name: 'Золото', price: 100,
           colors: { main: 'rgba(255, 215, 0, 0.4)', highlight: 'rgba(255, 255, 200, 0.9)',
-                   shadow: 'rgba(200, 150, 0, 0.3)', edge: 'rgba(255, 200, 0, 0.2)', innerGlow: 'rgba(255, 230, 100, 0.2)' }},
+                   shadow: 'rgba(200, 150, 0, 0.3)', edge: 'rgba(255, 200, 0, 0.2)', 
+                   innerGlow: 'rgba(255, 230, 100, 0.2)', glow: 'rgba(255, 215, 0, 0.4)' }},
         { id: 'soap', name: 'Мыло', price: 150,
           colors: { main: 'rgba(255, 200, 220, 0.3)', highlight: 'rgba(255, 255, 255, 0.9)',
-                   shadow: 'rgba(255, 150, 180, 0.2)', edge: 'rgba(255, 200, 220, 0.15)', innerGlow: 'rgba(255, 220, 230, 0.2)' }},
+                   shadow: 'rgba(255, 150, 180, 0.2)', edge: 'rgba(255, 200, 220, 0.15)', 
+                   innerGlow: 'rgba(255, 220, 230, 0.2)', glow: 'rgba(255, 200, 220, 0.3)' }},
         { id: 'plasma', name: 'Плазма', price: 200,
           colors: { main: 'rgba(150, 0, 255, 0.3)', highlight: 'rgba(200, 100, 255, 0.8)',
-                   shadow: 'rgba(100, 0, 200, 0.3)', edge: 'rgba(150, 50, 255, 0.2)', innerGlow: 'rgba(180, 50, 255, 0.2)' }},
+                   shadow: 'rgba(100, 0, 200, 0.3)', edge: 'rgba(150, 50, 255, 0.2)', 
+                   innerGlow: 'rgba(180, 50, 255, 0.2)', glow: 'rgba(150, 0, 255, 0.4)' }},
         { id: 'cosmic', name: 'Галактика', price: 300,
           colors: { main: 'rgba(100, 0, 150, 0.4)', highlight: 'rgba(200, 150, 255, 0.8)',
-                   shadow: 'rgba(50, 0, 100, 0.3)', edge: 'rgba(150, 100, 255, 0.2)', innerGlow: 'rgba(120, 50, 200, 0.25)' }},
+                   shadow: 'rgba(50, 0, 100, 0.3)', edge: 'rgba(150, 100, 255, 0.2)', 
+                   innerGlow: 'rgba(120, 50, 200, 0.25)', glow: 'rgba(150, 100, 255, 0.4)' }},
         { id: 'coffee', name: 'Кофе', price: 250,
           colors: { main: 'rgba(139, 90, 43, 0.4)', highlight: 'rgba(255, 230, 200, 0.8)',
-                   shadow: 'rgba(100, 60, 20, 0.3)', edge: 'rgba(139, 90, 43, 0.2)', innerGlow: 'rgba(180, 140, 100, 0.2)' }},
+                   shadow: 'rgba(100, 60, 20, 0.3)', edge: 'rgba(139, 90, 43, 0.2)', 
+                   innerGlow: 'rgba(180, 140, 100, 0.2)', glow: 'rgba(139, 90, 43, 0.4)' }},
         { id: 'neon', name: 'Неон', price: 350,
           colors: { main: 'rgba(0, 255, 150, 0.3)', highlight: 'rgba(200, 255, 230, 0.9)',
-                   shadow: 'rgba(0, 200, 100, 0.3)', edge: 'rgba(0, 255, 150, 0.2)', innerGlow: 'rgba(50, 255, 180, 0.25)' }}
+                   shadow: 'rgba(0, 200, 100, 0.3)', edge: 'rgba(0, 255, 150, 0.2)', 
+                   innerGlow: 'rgba(50, 255, 180, 0.25)', glow: 'rgba(0, 255, 150, 0.4)' }}
     ],
 
     unlocked: ['default'],
@@ -2182,7 +2235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.code === 'Space' || e.code === 'ArrowUp') {
             if (Game.state === 'playing' && Game.bubble) {
                 Game.isPressed = true;
-                Game.bubble.stick();
+                Game.bubble.stick('left');
             }
         }
     });
