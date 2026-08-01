@@ -8,516 +8,96 @@
     <meta name="theme-color" content="#0a0a1a">
     <title>ПУЗЫРЁК</title>
     <style>
-/* ===== RESET & BASE ===== */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: none !important;
-    user-select: none;
-    -webkit-user-select: none;
-}
+/* ===== RESET ===== */
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:none !important; user-select:none; -webkit-user-select:none; }
+html,body { width:100%; height:100%; overflow:hidden; background:#0a0a1a; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:#fff; touch-action:none; }
 
-html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #0a0a1a;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #fff;
-    touch-action: none;
-}
+#game-container { position:fixed; top:0; left:0; width:100%; height:100%; overflow:hidden; }
+#game-canvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; touch-action:none; }
 
-#game-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
+/* ===== UI ===== */
+#ui-layer { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:2; }
+#ui-layer .screen { position:fixed; top:0; left:0; width:100%; height:100%; display:none; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+#ui-layer .screen.active { display:flex; pointer-events:auto; }
 
-#game-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    touch-action: none;
-}
+/* ===== GLASS ===== */
+.menu-glass { background:rgba(15,15,35,0.88); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border:1px solid rgba(255,255,255,0.08); border-radius:28px; padding:36px 28px; width:90%; max-width:360px; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06); animation:glassIn 0.5s cubic-bezier(0.22,1,0.36,1); }
+@keyframes glassIn { from{opacity:0;transform:translateY(30px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
 
-/* ===== UI LAYER ===== */
-#ui-layer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 2;
-}
-
-#ui-layer .screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
-
-#ui-layer .screen.active {
-    display: flex;
-    pointer-events: auto;
-}
-
-/* ===== GLASS PANELS ===== */
-.menu-glass {
-    background: rgba(20, 20, 40, 0.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
-    padding: 32px 24px;
-    width: 90%;
-    max-width: 360px;
-    text-align: center;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    animation: glassIn 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes glassIn {
-    from { opacity: 0; transform: translateY(30px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-/* ===== MAIN MENU ===== */
-.game-title {
-    font-size: 42px;
-    font-weight: 900;
-    letter-spacing: 4px;
-    background: linear-gradient(135deg, #ffd700, #ff8c00, #ff4500);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 4px;
-    filter: drop-shadow(0 2px 8px rgba(255, 140, 0, 0.3));
-}
-
-.game-subtitle {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.5);
-    letter-spacing: 6px;
-    margin-bottom: 24px;
-    text-transform: uppercase;
-}
-
-.menu-bubble-demo {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 24px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(100, 200, 255, 0.4), rgba(50, 100, 200, 0.2));
-    box-shadow: 0 0 20px rgba(100, 200, 255, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.2);
-    animation: bubbleFloat 3s ease-in-out infinite;
-    position: relative;
-}
-
-.menu-bubble-demo::after {
-    content: '';
-    position: absolute;
-    top: 18%;
-    left: 22%;
-    width: 22%;
-    height: 22%;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.8);
-    filter: blur(1px);
-}
-
-@keyframes bubbleFloat {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-12px) scale(1.05); }
-}
-
-.best-score {
-    margin-top: 20px;
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.5);
-    letter-spacing: 1px;
-}
-
-.best-score span {
-    color: #ffd700;
-    font-weight: 700;
-    font-size: 18px;
-}
+/* ===== MENU ===== */
+.game-title { font-size:46px; font-weight:900; letter-spacing:5px; background:linear-gradient(135deg,#ffd700,#ff8c00,#ff4500); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:6px; filter:drop-shadow(0 2px 8px rgba(255,140,0,0.3)); }
+.game-subtitle { font-size:13px; color:rgba(255,255,255,0.45); letter-spacing:7px; margin-bottom:28px; text-transform:uppercase; }
+.menu-bubble-demo { width:90px; height:90px; margin:0 auto 28px; border-radius:50%; background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.9),rgba(100,200,255,0.4),rgba(50,100,200,0.2)); box-shadow:0 0 24px rgba(100,200,255,0.25),inset 0 0 24px rgba(255,255,255,0.15); animation:bubbleFloat 3s ease-in-out infinite; position:relative; }
+.menu-bubble-demo::after { content:''; position:absolute; top:18%; left:22%; width:22%; height:22%; border-radius:50%; background:rgba(255,255,255,0.8); filter:blur(1px); }
+@keyframes bubbleFloat { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-14px) scale(1.05)} }
+.best-score { margin-top:22px; font-size:14px; color:rgba(255,255,255,0.45); letter-spacing:1px; }
+.best-score span { color:#ffd700; font-weight:700; font-size:20px; }
 
 /* ===== BUTTONS ===== */
-.btn {
-    display: block;
-    width: 100%;
-    padding: 16px;
-    margin: 8px 0;
-    border: none;
-    border-radius: 16px;
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    pointer-events: auto;
-    position: relative;
-    overflow: hidden;
-}
+.btn { display:block; width:100%; padding:17px; margin:8px 0; border:none; border-radius:18px; font-size:16px; font-weight:700; letter-spacing:2px; cursor:pointer; transition:all 0.15s ease; pointer-events:auto; position:relative; overflow:hidden; }
+.btn:active { transform:scale(0.96); }
+.btn-primary { background:linear-gradient(135deg,#ff8c00,#ff4500); color:#fff; box-shadow:0 4px 18px rgba(255,69,0,0.3); }
+.btn-secondary { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.8); border:1px solid rgba(255,255,255,0.12); }
+.btn-back { background:transparent; color:rgba(255,255,255,0.45); font-size:14px; margin-top:16px; }
 
-.btn:active {
-    transform: scale(0.96);
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #ff8c00, #ff4500);
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(255, 69, 0, 0.3);
-}
-
-.btn-secondary {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.btn-back {
-    background: transparent;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 14px;
-    margin-top: 16px;
-}
-
-/* ===== HUD — ВНИЗУ ЭКРАНА ===== */
-#hud {
-    justify-content: flex-end;
-    padding: 0 20px 32px;
-    pointer-events: none !important;
-}
-
-#hud * {
-    pointer-events: none !important;
-}
-
-.hud-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    width: 100%;
-    padding-bottom: 8px;
-}
-
-.score-box, .combo-box {
-    text-align: center;
-}
-
-.score-label, .combo-label {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: rgba(255, 255, 255, 0.35);
-    margin-bottom: 2px;
-}
-
-.score-value {
-    font-size: 32px;
-    font-weight: 900;
-    color: #fff;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    line-height: 1;
-}
-
-.combo-box {
-    opacity: 0;
-    transform: scale(0.8);
-    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.combo-box.visible {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.combo-value {
-    font-size: 24px;
-    font-weight: 900;
-    background: linear-gradient(135deg, #ffd700, #ff8c00);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.hud-bottom {
-    width: 100%;
-}
-
-.progress-bar {
-    width: 100%;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #ff8c00, #ffd700);
-    border-radius: 2px;
-    transition: width 0.3s ease;
-}
+/* ===== HUD ===== */
+#hud { justify-content:space-between; align-items:center; padding:16px 0 0; pointer-events:none !important; }
+#hud * { pointer-events:none !important; }
+.hud-center { position:absolute; top:16px; left:50%; transform:translateX(-50%); text-align:center; }
+.score-label { display:block; font-size:9px; letter-spacing:4px; color:rgba(255,255,255,0.3); margin-bottom:2px; }
+.score-value { font-size:52px; font-weight:900; color:#fff; text-shadow:0 2px 12px rgba(0,0,0,0.6); line-height:1; }
+.hud-bottom { position:absolute; bottom:0; left:0; width:100%; padding:0; }
+.progress-bar { width:100%; height:3px; background:rgba(255,255,255,0.06); border-radius:0; overflow:hidden; }
+.progress-fill { height:100%; width:0%; background:linear-gradient(90deg,#ff8c00,#ffd700); border-radius:0; transition:width 0.3s ease; }
 
 /* ===== GAME OVER ===== */
-.dead-title {
-    font-size: 32px;
-    font-weight: 900;
-    color: #ff4500;
-    letter-spacing: 4px;
-    margin-bottom: 16px;
-    animation: shake 0.5s ease;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-8px); }
-    40% { transform: translateX(8px); }
-    60% { transform: translateX(-4px); }
-    80% { transform: translateX(4px); }
-}
-
-.dead-bubble {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 20px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 100, 100, 0.3), transparent);
-    border: 2px solid rgba(255, 100, 100, 0.5);
-    position: relative;
-    animation: popDead 0.6s ease;
-}
-
-@keyframes popDead {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.4); opacity: 0.5; }
-    100% { transform: scale(0); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-.final-stats {
-    display: flex;
-    justify-content: space-around;
-    margin: 20px 0;
-    padding: 16px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 16px;
-}
-
-.stat {
-    text-align: center;
-}
-
-.stat-label {
-    display: block;
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.4);
-    letter-spacing: 2px;
-    margin-bottom: 4px;
-}
-
-.stat-value {
-    font-size: 24px;
-    font-weight: 900;
-    color: #fff;
-}
+.dead-title { font-size:34px; font-weight:900; color:#ff4500; letter-spacing:4px; margin-bottom:16px; animation:shake 0.5s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+.dead-bubble { width:60px; height:60px; margin:0 auto 20px; border-radius:50%; background:radial-gradient(circle,rgba(255,100,100,0.3),transparent); border:2px solid rgba(255,100,100,0.5); position:relative; animation:popDead 0.6s ease; }
+@keyframes popDead { 0%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:0.5} 100%{transform:scale(0);opacity:0} 100%{transform:scale(1);opacity:1} }
+.final-stats { display:flex; justify-content:space-around; margin:20px 0; padding:16px; background:rgba(0,0,0,0.2); border-radius:16px; }
+.stat { text-align:center; }
+.stat-label { display:block; font-size:10px; color:rgba(255,255,255,0.4); letter-spacing:2px; margin-bottom:4px; }
+.stat-value { font-size:24px; font-weight:900; color:#fff; }
 
 /* ===== SKINS ===== */
-.skins-glass {
-    max-height: 80vh;
-    overflow-y: auto;
-    padding: 24px 16px;
-}
-
-.screen-title {
-    font-size: 24px;
-    font-weight: 900;
-    letter-spacing: 3px;
-    margin-bottom: 8px;
-}
-
-.coins-display {
-    font-size: 18px;
-    color: #ffd700;
-    margin-bottom: 16px;
-    font-weight: 700;
-}
-
-.skins-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-.skin-card {
-    aspect-ratio: 1;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    padding: 8px;
-    pointer-events: auto;
-}
-
-.skin-card.active {
-    border-color: #ff8c00;
-    background: rgba(255, 140, 0, 0.1);
-}
-
-.skin-card.locked {
-    opacity: 0.4;
-}
-
-.skin-card:active {
-    transform: scale(0.95);
-}
-
-.skin-preview {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    margin-bottom: 4px;
-}
-
-.skin-name {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.7);
-    text-align: center;
-}
-
-.skin-price {
-    font-size: 10px;
-    color: #ffd700;
-    margin-top: 2px;
-}
-
-.skin-check {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 18px;
-    height: 18px;
-    background: #ff8c00;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-}
+.skins-glass { max-height:80vh; overflow-y:auto; padding:24px 16px; }
+.screen-title { font-size:24px; font-weight:900; letter-spacing:3px; margin-bottom:8px; }
+.coins-display { font-size:18px; color:#ffd700; margin-bottom:16px; font-weight:700; }
+.skins-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+.skin-card { aspect-ratio:1; border-radius:18px; background:rgba(255,255,255,0.04); border:2px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s ease; position:relative; padding:8px; pointer-events:auto; }
+.skin-card.active { border-color:#ff8c00; background:rgba(255,140,0,0.08); }
+.skin-card.locked { opacity:0.35; }
+.skin-card:active { transform:scale(0.95); }
+.skin-preview { width:52px; height:52px; border-radius:50%; position:relative; margin-bottom:4px; }
+/* Блик на превью */
+.skin-preview::after { content:''; position:absolute; top:15%; left:18%; width:22%; height:22%; border-radius:50%; background:rgba(255,255,255,0.7); filter:blur(0.5px); }
+.skin-name { font-size:10px; color:rgba(255,255,255,0.65); text-align:center; }
+.skin-price { font-size:10px; color:#ffd700; margin-top:2px; }
+.skin-check { position:absolute; top:4px; right:4px; width:18px; height:18px; background:#ff8c00; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; }
 
 /* ===== SETTINGS ===== */
-.setting-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.toggle-btn {
-    padding: 6px 16px;
-    border-radius: 20px;
-    border: none;
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    pointer-events: auto;
-}
-
-.toggle-btn.active {
-    background: linear-gradient(135deg, #ff8c00, #ff4500);
-    color: #fff;
-}
+.setting-row { display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:16px; color:rgba(255,255,255,0.8); }
+.toggle-btn { padding:6px 16px; border-radius:20px; border:none; background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.45); font-size:12px; font-weight:700; cursor:pointer; transition:all 0.2s; pointer-events:auto; }
+.toggle-btn.active { background:linear-gradient(135deg,#ff8c00,#ff4500); color:#fff; }
 
 /* ===== TUTORIAL ===== */
-#tutorial {
-    background: rgba(0, 0, 0, 0.7);
-}
-
-.tutorial-content {
-    text-align: center;
-    animation: tutorialIn 0.5s ease;
-}
-
-@keyframes tutorialIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.tutorial-hand {
-    font-size: 64px;
-    margin-bottom: 16px;
-    animation: handTap 1.5s ease-in-out infinite;
-}
-
-@keyframes handTap {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-20px) scale(0.9); }
-}
-
-.tutorial-text {
-    font-size: 16px;
-    line-height: 1.6;
-    color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 32px;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-}
+#tutorial { background:rgba(0,0,0,0.7); }
+.tutorial-content { text-align:center; animation:tutorialIn 0.5s ease; }
+@keyframes tutorialIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.tutorial-hand { font-size:64px; margin-bottom:16px; animation:handTap 1.5s ease-in-out infinite; }
+@keyframes handTap { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-20px) scale(0.9)} }
+.tutorial-text { font-size:16px; line-height:1.6; color:rgba(255,255,255,0.8); margin-bottom:32px; text-shadow:0 2px 8px rgba(0,0,0,0.5); }
 
 /* ===== RESPONSIVE ===== */
-@media (max-height: 600px) {
-    .game-title { font-size: 32px; }
-    .menu-glass { padding: 20px 16px; }
-    .btn { padding: 12px; margin: 6px 0; }
-    .menu-bubble-demo { width: 60px; height: 60px; margin-bottom: 16px; }
-}
-
-@media (min-height: 800px) {
-    .menu-glass { padding: 40px 28px; }
-    .game-title { font-size: 48px; }
-}
-
-.skins-glass::-webkit-scrollbar { display: none; }
-.skins-glass { -ms-overflow-style: none; scrollbar-width: none; }
-
+@media (max-height:600px) { .game-title{font-size:34px} .menu-glass{padding:20px 16px} .btn{padding:12px;margin:6px 0} .menu-bubble-demo{width:70px;height:70px;margin-bottom:18px} .score-value{font-size:40px} }
+@media (min-height:800px) { .menu-glass{padding:44px 32px} .game-title{font-size:52px} .score-value{font-size:60px} }
+.skins-glass::-webkit-scrollbar{display:none} .skins-glass{-ms-overflow-style:none;scrollbar-width:none}
     </style>
 </head>
 <body>
     <div id="game-container">
         <canvas id="game-canvas" tabindex="0"></canvas>
-
         <div id="ui-layer">
             <div id="main-menu" class="screen active">
                 <div class="menu-glass">
@@ -532,15 +112,9 @@ html, body {
             </div>
 
             <div id="hud" class="screen">
-                <div class="hud-top">
-                    <div class="score-box">
-                        <span class="score-label">ВЫСОТА</span>
-                        <span class="score-value" id="hud-score">0</span>
-                    </div>
-                    <div class="combo-box" id="combo-container">
-                        <span class="combo-label">КОМБО</span>
-                        <span class="combo-value" id="hud-combo">x1</span>
-                    </div>
+                <div class="hud-center">
+                    <span class="score-label">ВЫСОТА</span>
+                    <span class="score-value" id="hud-score">0</span>
                 </div>
                 <div class="hud-bottom">
                     <div class="progress-bar">
@@ -554,18 +128,8 @@ html, body {
                     <h2 class="dead-title">ЛОПНУЛ!</h2>
                     <div class="dead-bubble" id="dead-bubble"></div>
                     <div class="final-stats">
-                        <div class="stat">
-                            <span class="stat-label">Высота</span>
-                            <span class="stat-value" id="final-score">0</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-label">Рекорд</span>
-                            <span class="stat-value" id="final-best">0</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-label">Комбо</span>
-                            <span class="stat-value" id="final-combo">0</span>
-                        </div>
+                        <div class="stat"><span class="stat-label">Высота</span><span class="stat-value" id="final-score">0</span></div>
+                        <div class="stat"><span class="stat-label">Рекорд</span><span class="stat-value" id="final-best">0</span></div>
                     </div>
                     <button class="btn btn-primary" id="btn-restart">ЕЩЁ РАЗ</button>
                     <button class="btn btn-secondary" id="btn-menu">МЕНЮ</button>
@@ -584,18 +148,9 @@ html, body {
             <div id="settings-screen" class="screen">
                 <div class="menu-glass">
                     <h2 class="screen-title">НАСТРОЙКИ</h2>
-                    <div class="setting-row">
-                        <span>Звук</span>
-                        <button class="toggle-btn active" id="toggle-sound">ON</button>
-                    </div>
-                    <div class="setting-row">
-                        <span>Вибрация</span>
-                        <button class="toggle-btn active" id="toggle-vibro">ON</button>
-                    </div>
-                    <div class="setting-row">
-                        <span>Частицы</span>
-                        <button class="toggle-btn active" id="toggle-particles">ON</button>
-                    </div>
+                    <div class="setting-row"><span>Звук</span><button class="toggle-btn active" id="toggle-sound">ON</button></div>
+                    <div class="setting-row"><span>Вибрация</span><button class="toggle-btn active" id="toggle-vibro">ON</button></div>
+                    <div class="setting-row"><span>Частицы</span><button class="toggle-btn active" id="toggle-particles">ON</button></div>
                     <button class="btn btn-back" id="btn-settings-back">← НАЗАД</button>
                 </div>
             </div>
@@ -611,165 +166,100 @@ html, body {
     </div>
 
     <script>
-// ===== CORE ENGINE v4 =====
+
 const Game = {
-    canvas: null,
-    ctx: null,
-    width: 0,
-    height: 0,
-    dpr: 1,
-    state: 'menu',
-    lastTime: 0,
-    accumulator: 0,
-    tickRate: 1 / 60,
-
-    bubble: null,
-    glass: null,
-    camera: null,
-    world: null,
-
-    score: 0,
-    bestScore: 0,
-    combo: 0,
-    maxCombo: 0,
-    coins: 0,
-
-    settings: {
-        sound: true,
-        vibration: true,
-        particles: true
-    },
-
-    currentSkin: 'default',
-    isPressed: false,
-    touchSide: null,
+    canvas: null, ctx: null, width: 0, height: 0, dpr: 1,
+    state: 'menu', lastTime: 0, accumulator: 0, tickRate: 1 / 60,
+    bubble: null, glass: null, camera: null, world: null,
+    score: 0, bestScore: 0, coins: 0,
+    settings: { sound: true, vibration: true, particles: true },
+    currentSkin: 'default', isPressed: false, touchSide: null,
 
     init() {
         this.canvas = document.getElementById('game-canvas');
         this.ctx = this.canvas.getContext('2d');
         this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-
         this.resize();
         window.addEventListener('resize', () => this.resize());
-
         this.loadSave();
-
         this.glass = new Glass();
         this.bubble = new Bubble();
         this.camera = new Camera();
-
         this.setupInput();
-
         this.lastTime = performance.now();
         requestAnimationFrame((t) => this.loop(t));
     },
 
     resize() {
-        const container = document.getElementById('game-container');
-        this.width = container.clientWidth;
-        this.height = container.clientHeight;
-
+        const c = document.getElementById('game-container');
+        this.width = c.clientWidth; this.height = c.clientHeight;
         this.canvas.width = this.width * this.dpr;
         this.canvas.height = this.height * this.dpr;
         this.canvas.style.width = this.width + 'px';
         this.canvas.style.height = this.height + 'px';
-
         this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-
         if (this.glass) this.glass.resize();
         if (this.bubble) this.bubble.resize();
     },
 
     setupInput() {
-        const canvas = this.canvas;
-
+        const c = this.canvas;
         const getSide = (e) => {
-            const clientX = e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX;
-            return clientX < window.innerWidth / 2 ? 'left' : 'right';
+            const cx = e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX;
+            return cx < window.innerWidth / 2 ? 'left' : 'right';
         };
-
-        const handleStart = (e) => {
+        const down = (e) => {
             if (this.state !== 'playing') return;
             if (e.type === 'touchstart') e.preventDefault();
-
-            this.isPressed = true;
-            this.touchSide = getSide(e);
-            if (this.bubble) this.bubble.stick(this.touchSide);
+            this.isPressed = true; this.touchSide = getSide(e);
+            if (this.bubble) this.bubble.startMovingToWall(this.touchSide);
         };
-
-        const handleEnd = (e) => {
+        const up = (e) => {
             if (this.state !== 'playing') return;
             if (e.type === 'touchend') e.preventDefault();
-
-            this.isPressed = false;
-            this.touchSide = null;
+            this.isPressed = false; this.touchSide = null;
             if (this.bubble) this.bubble.release();
         };
-
-        canvas.addEventListener('mousedown', handleStart);
-        canvas.addEventListener('mouseup', handleEnd);
-        canvas.addEventListener('mouseleave', handleEnd);
-
-        canvas.addEventListener('touchstart', handleStart, { passive: false });
-        canvas.addEventListener('touchend', handleEnd, { passive: false });
-        canvas.addEventListener('touchcancel', handleEnd, { passive: false });
-
-        canvas.addEventListener('contextmenu', e => e.preventDefault());
+        c.addEventListener('mousedown', down);
+        c.addEventListener('mouseup', up);
+        c.addEventListener('mouseleave', up);
+        c.addEventListener('touchstart', down, { passive: false });
+        c.addEventListener('touchend', up, { passive: false });
+        c.addEventListener('touchcancel', up, { passive: false });
+        c.addEventListener('contextmenu', e => e.preventDefault());
     },
 
     start() {
-        this.state = 'playing';
-        this.score = 0;
-        this.combo = 0;
-        this.maxCombo = 0;
-        this.isPressed = false;
-        this.touchSide = null;
-        this.bubble.reset();
-        this.camera.reset();
+        this.state = 'playing'; this.score = 0;
+        this.isPressed = false; this.touchSide = null;
+        this.bubble.reset(); this.camera.reset();
         if (this.world) this.world.reset();
         this.updateHUD();
+        document.getElementById('game-canvas').style.filter = 'none';
     },
 
     gameOver() {
         this.state = 'gameover';
-        if (this.settings.vibration && navigator.vibrate) {
-            navigator.vibrate([50, 30, 80]);
-        }
-
-        if (this.score > this.bestScore) {
-            this.bestScore = this.score;
-        }
-
-        const earned = Math.floor(this.score / 10) + Math.floor(this.maxCombo / 2);
-        this.coins += earned;
+        if (this.settings.vibration && navigator.vibrate) navigator.vibrate([50, 30, 80]);
+        if (this.score > this.bestScore) this.bestScore = this.score;
+        this.coins += Math.floor(this.score / 10);
         this.save();
-
-        if (this.world) {
-            this.world.createDeathExplosion(this.bubble.x, this.bubble.y, this.bubble.radius);
-        }
-
+        if (this.world) this.world.createDeathExplosion(this.bubble.x, this.bubble.y, this.bubble.radius);
         if (AudioEngine && AudioEngine.ctx) AudioEngine.play('pop');
-
         setTimeout(() => {
             document.getElementById('final-score').textContent = Math.floor(this.score);
             document.getElementById('final-best').textContent = this.bestScore;
-            document.getElementById('final-combo').textContent = 'x' + this.maxCombo;
             showScreen('game-over');
+            document.getElementById('game-canvas').style.filter = 'blur(6px) brightness(0.5)';
         }, 400);
     },
 
-    loop(timestamp) {
-        if (this.lastTime === 0) this.lastTime = timestamp;
-        const dt = Math.min((timestamp - this.lastTime) / 1000, 0.05);
-        this.lastTime = timestamp;
-
+    loop(ts) {
+        if (this.lastTime === 0) this.lastTime = ts;
+        const dt = Math.min((ts - this.lastTime) / 1000, 0.05);
+        this.lastTime = ts;
         this.accumulator += dt;
-
-        while (this.accumulator >= this.tickRate) {
-            this.update(this.tickRate);
-            this.accumulator -= this.tickRate;
-        }
-
+        while (this.accumulator >= this.tickRate) { this.update(this.tickRate); this.accumulator -= this.tickRate; }
         this.render();
         requestAnimationFrame((t) => this.loop(t));
     },
@@ -778,1480 +268,585 @@ const Game = {
         if (this.state === 'playing') {
             this.bubble.update(dt);
             this.camera.update(dt, this.bubble.y);
-
-            if (this.world) {
-                this.world.update(dt, this.bubble, this.camera.y);
-            }
-
-            const newScore = Math.max(0, Math.floor(-this.bubble.y / 100));
-            if (newScore > this.score) {
-                this.score = newScore;
-                this.updateHUD();
-            }
-
-            if (this.bubble.dead) {
-                this.gameOver();
-            }
+            if (this.world) this.world.update(dt, this.bubble, this.camera.y);
+            const ns = Math.max(0, Math.floor(-this.bubble.y / 100));
+            if (ns > this.score) { this.score = ns; this.updateHUD(); }
+            if (this.bubble.dead) this.gameOver();
         } else if (this.state === 'gameover' && this.world) {
             this.world.updateParticlesOnly(dt);
         }
     },
 
     render() {
-        const ctx = this.ctx;
-        const w = this.width;
-        const h = this.height;
-
+        const ctx = this.ctx, w = this.width, h = this.height;
         ctx.clearRect(0, 0, w, h);
         this.drawBackground(ctx, w, h);
-
-        ctx.save();
-        ctx.translate(0, -this.camera.y);
-
+        ctx.save(); ctx.translate(0, -this.camera.y);
         this.glass.renderBack(ctx, this.camera.y);
-
-        if (this.world) {
-            this.world.renderObstacles(ctx, this.camera.y);
-        }
-
+        if (this.world) this.world.renderObstacles(ctx, this.camera.y);
         this.bubble.render(ctx);
-
-        if (this.world) {
-            this.world.renderParticles(ctx, this.camera.y);
-        }
-
+        if (this.world) this.world.renderParticles(ctx, this.camera.y);
         this.glass.renderFront(ctx, this.camera.y);
-
         ctx.restore();
         this.drawVignette(ctx, w, h);
     },
 
     drawBackground(ctx, w, h) {
-        // Анимированный градиент жидкости — меняется со временем
         const time = Date.now() * 0.0003;
-        const hueShift = Math.sin(time) * 10; // лёгкий сдвиг тона
-
-        const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0, `hsl(${35 + hueShift}, 60%, 8%)`);
-        grad.addColorStop(0.25, `hsl(${38 + hueShift}, 55%, 12%)`);
-        grad.addColorStop(0.5, `hsl(${42 + hueShift}, 50%, 16%)`);
-        grad.addColorStop(0.75, `hsl(${45 + hueShift}, 45%, 12%)`);
-        grad.addColorStop(1, `hsl(${30 + hueShift}, 70%, 6%)`);
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, w, h);
-
-        // Световые лучи — плавно движущиеся полосы
-        const rayCount = 5;
-        for (let i = 0; i < rayCount; i++) {
-            const phase = time * 0.5 + i * 1.2;
-            const x = w * (0.2 + 0.6 * ((Math.sin(phase * 0.7) + 1) / 2));
-            const alpha = 0.015 + Math.sin(phase) * 0.008;
-            const width = 40 + Math.sin(phase * 1.3) * 20;
-
-            const rayGrad = ctx.createLinearGradient(x - width/2, 0, x + width/2, 0);
-            rayGrad.addColorStop(0, 'rgba(255, 220, 150, 0)');
-            rayGrad.addColorStop(0.5, `rgba(255, 200, 100, ${alpha})`);
-            rayGrad.addColorStop(1, 'rgba(255, 220, 150, 0)');
-
-            ctx.fillStyle = rayGrad;
-            ctx.fillRect(x - width/2, 0, width, h);
+        const hueShift = Math.sin(time) * 8;
+        const g = ctx.createLinearGradient(0, 0, 0, h);
+        g.addColorStop(0, `hsl(${33 + hueShift}, 55%, 7%)`);
+        g.addColorStop(0.3, `hsl(${36 + hueShift}, 50%, 10%)`);
+        g.addColorStop(0.6, `hsl(${40 + hueShift}, 45%, 13%)`);
+        g.addColorStop(1, `hsl(${28 + hueShift}, 65%, 5%)`);
+        ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+        for (let i = 0; i < 5; i++) {
+            const ph = time * 0.5 + i * 1.2;
+            const x = w * (0.15 + 0.7 * ((Math.sin(ph * 0.7) + 1) / 2));
+            const a = 0.012 + Math.sin(ph) * 0.006;
+            const rg = ctx.createLinearGradient(x - 30, 0, x + 30, 0);
+            rg.addColorStop(0, 'rgba(255,210,120,0)');
+            rg.addColorStop(0.5, `rgba(255,200,90,${a})`);
+            rg.addColorStop(1, 'rgba(255,210,120,0)');
+            ctx.fillStyle = rg; ctx.fillRect(x - 30, 0, 60, h);
         }
-
-        // Медленно плывущие "пласты" жидкости
         for (let i = 0; i < 3; i++) {
-            const y = (time * 30 + i * h/3) % (h + 100) - 50;
-            const waveAlpha = 0.02 + Math.sin(time + i) * 0.01;
-            ctx.fillStyle = `rgba(255, 180, 60, ${waveAlpha})`;
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            for (let x = 0; x <= w; x += 20) {
-                ctx.lineTo(x, y + Math.sin(x * 0.01 + time + i) * 15);
-            }
-            ctx.lineTo(w, y + 40);
-            ctx.lineTo(0, y + 40);
-            ctx.closePath();
-            ctx.fill();
+            const y = (time * 25 + i * h / 3) % (h + 100) - 50;
+            ctx.fillStyle = `rgba(255,170,50,${0.015 + Math.sin(time + i) * 0.008})`;
+            ctx.beginPath(); ctx.moveTo(0, y);
+            for (let x = 0; x <= w; x += 20) ctx.lineTo(x, y + Math.sin(x * 0.008 + time + i) * 12);
+            ctx.lineTo(w, y + 35); ctx.lineTo(0, y + 35); ctx.closePath(); ctx.fill();
         }
     },
 
     drawVignette(ctx, w, h) {
-        const grad = ctx.createRadialGradient(w/2, h/2, h*0.3, w/2, h/2, h*0.8);
-        grad.addColorStop(0, 'rgba(0,0,0,0)');
-        grad.addColorStop(1, 'rgba(0,0,0,0.5)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, w, h);
+        const g = ctx.createRadialGradient(w / 2, h / 2, h * 0.3, w / 2, h / 2, h * 0.85);
+        g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.5)');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
     },
 
     updateHUD() {
         document.getElementById('hud-score').textContent = this.score;
         document.getElementById('menu-best').textContent = this.bestScore;
         document.getElementById('coins-count').textContent = this.coins;
-
-        const comboEl = document.getElementById('combo-container');
-        const comboVal = document.getElementById('hud-combo');
-
-        if (this.combo >= 3) {
-            comboEl.classList.add('visible');
-            comboVal.textContent = 'x' + this.combo;
-        } else {
-            comboEl.classList.remove('visible');
-        }
-
         const progress = Math.min((this.score % 50) / 50 * 100, 100);
         document.getElementById('progress-fill').style.width = progress + '%';
     },
 
     loadSave() {
         try {
-            const save = JSON.parse(localStorage.getItem('bubble_save') || '{}');
-            this.bestScore = save.best || 0;
-            this.coins = save.coins || 0;
-            this.currentSkin = save.skin || 'default';
-            this.settings = { ...this.settings, ...(save.settings || {}) };
-        } catch(e) {}
+            const s = JSON.parse(localStorage.getItem('bubble_save') || '{}');
+            this.bestScore = s.best || 0; this.coins = s.coins || 0;
+            this.currentSkin = s.skin || 'default';
+            this.settings = { ...this.settings, ...(s.settings || {}) };
+        } catch (e) { }
     },
 
     save() {
-        const data = {
-            best: this.bestScore,
-            coins: this.coins,
-            skin: this.currentSkin,
-            settings: this.settings,
-            version: 1
-        };
-        localStorage.setItem('bubble_save', JSON.stringify(data));
+        localStorage.setItem('bubble_save', JSON.stringify({
+            best: this.bestScore, coins: this.coins, skin: this.currentSkin,
+            settings: this.settings, version: 1
+        }));
     }
 };
 
-// ===== BUBBLE =====
 class Bubble {
     constructor() {
-        this.radius = 18;
-        this.x = 0;
-        this.y = 0;
-        this.vx = 0;
-        this.vy = 0;
-        this.state = 'floating';
-        this.stuckSide = null;
-        this.dead = false;
-        this.wobblePhase = 0;
-        this.baseSpeed = 120;
-        this.maxSpeed = 350;
-        this.glowIntensity = 0;
-        this.resize();
+        this.radius = 18; this.x = 0; this.y = 0; this.vx = 0; this.vy = 0;
+        this.state = 'floating'; this.stuckSide = null; this.dead = false;
+        this.wobblePhase = 0; this.baseSpeed = 120; this.maxSpeed = 350;
+        this.glowIntensity = 0; this.resize();
     }
 
     resize() {
         if (Game.state !== 'playing') {
-            this.x = Game.width / 2;
-            this.y = Game.height * 0.7;
+            this.x = Game.width / 2; this.y = Game.height * 0.7;
         }
     }
 
     reset() {
-        this.x = Game.width / 2;
-        this.y = 0;
-        this.vx = 0;
-        this.vy = 0;
-        this.state = 'floating';
-        this.stuckSide = null;
-        this.dead = false;
-        this.wobblePhase = 0;
-        this.glowIntensity = 0;
+        this.x = Game.width / 2; this.y = 0; this.vx = 0; this.vy = 0;
+        this.state = 'floating'; this.stuckSide = null; this.dead = false;
+        this.wobblePhase = 0; this.glowIntensity = 0;
     }
 
-    stick(side) {
-        if (this.state === 'stuck' || this.dead) return;
-
-        this.state = 'stuck';
-        this.stuckSide = side;
-        this.glowIntensity = 1.0;
-
-        Game.combo++;
-        if (Game.combo > Game.maxCombo) Game.maxCombo = Game.combo;
-        Game.updateHUD();
-
-        if (Game.settings.vibration && navigator.vibrate) {
-            navigator.vibrate(15);
-        }
-
-        if (Game.world) {
-            Game.world.createStickEffect(this.x, this.y, this.stuckSide);
-        }
-
+    startMovingToWall(side) {
+        if (this.dead) return;
+        if (this.state === 'stuck') return;
+        this.state = 'moving_to_wall';
+        this.targetSide = side;
+        this.glowIntensity = 0.7;
+        if (Game.settings.vibration && navigator.vibrate) navigator.vibrate(10);
         if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick');
     }
 
     release() {
-        if (this.state !== 'stuck' || this.dead) return;
-
-        this.state = 'floating';
-        this.glowIntensity = 0.6;
-
-        if (this.stuckSide === 'left') {
-            this.vx = 12;
-        } else {
-            this.vx = -12;
+        if (this.dead) return;
+        if (this.state === 'stuck') {
+            this.state = 'floating'; this.glowIntensity = 0.4;
+            this.vx = this.stuckSide === 'left' ? 20 : -20;
+            this.stuckSide = null;
+            if (Game.world) Game.world.createReleaseEffect(this.x, this.y);
+            if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
+        } else if (this.state === 'moving_to_wall') {
+            this.state = 'floating'; this.glowIntensity = 0.3;
+            if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
         }
-
-        this.stuckSide = null;
-
-        if (Game.world) {
-            Game.world.createReleaseEffect(this.x, this.y);
-        }
-
-        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
     }
 
     update(dt) {
         if (this.dead) return;
-
         this.wobblePhase += dt * 3;
-
-        // Затухание glow
-        if (this.glowIntensity > 0) {
-            this.glowIntensity -= dt * 2;
-            if (this.glowIntensity < 0) this.glowIntensity = 0;
-        }
-
+        if (this.glowIntensity > 0) { this.glowIntensity -= dt * 3; if (this.glowIntensity < 0) this.glowIntensity = 0; }
         const glass = Game.glass;
         const speed = Math.min(this.baseSpeed + Game.score * 1.5, this.maxSpeed);
+        const margin = this.radius + 4;
 
         if (this.state === 'floating') {
             this.vy = -speed;
-
-            // ОЧЕНЬ плавное боковое покачивание
-            this.vx += Math.sin(this.wobblePhase) * 8 * dt;
+            this.vx += Math.sin(this.wobblePhase) * 6 * dt;
             this.vx *= 0.97;
-
-            this.x += this.vx * dt;
-            this.y += this.vy * dt;
-
-            const margin = this.radius + 2;
-            if (this.x - margin < glass.leftX) {
-                this.x = glass.leftX + margin;
-                this.vx = Math.abs(this.vx) * 0.3;
+            this.x += this.vx * dt; this.y += this.vy * dt;
+            if (this.x - margin < glass.leftX) { this.x = glass.leftX + margin; this.vx = Math.abs(this.vx) * 0.3; }
+            if (this.x + margin > glass.rightX) { this.x = glass.rightX - margin; this.vx = -Math.abs(this.vx) * 0.3; }
+        } else if (this.state === 'moving_to_wall') {
+            this.vy = -speed;
+            const targetX = this.targetSide === 'left' ? glass.leftX + margin : glass.rightX - margin;
+            const dir = targetX > this.x ? 1 : -1;
+            this.vx = dir * 180;
+            this.x += this.vx * dt; this.y += this.vy * dt;
+            if (this.targetSide === 'left' && this.x <= glass.leftX + margin + 2) {
+                this.x = glass.leftX + margin; this.state = 'stuck'; this.stuckSide = 'left';
+                if (Game.world) Game.world.createStickEffect(this.x, this.y, 'left');
             }
-            if (this.x + margin > glass.rightX) {
-                this.x = glass.rightX - margin;
-                this.vx = -Math.abs(this.vx) * 0.3;
+            if (this.targetSide === 'right' && this.x >= glass.rightX - margin - 2) {
+                this.x = glass.rightX - margin; this.state = 'stuck'; this.stuckSide = 'right';
+                if (Game.world) Game.world.createStickEffect(this.x, this.y, 'right');
             }
-
         } else if (this.state === 'stuck') {
-            this.vy = -speed * 0.5;
-            this.vx = 0;
-
-            const targetX = this.stuckSide === 'left' 
-                ? glass.leftX + this.radius + 4 
-                : glass.rightX - this.radius - 4;
-
-            this.x += (targetX - this.x) * 15 * dt;
+            this.vy = -speed * 0.5; this.vx = 0;
+            const targetX = this.stuckSide === 'left' ? glass.leftX + margin : glass.rightX - margin;
+            this.x += (targetX - this.x) * 18 * dt;
             this.y += this.vy * dt;
         }
-
-        if (this.y > 200) {
-            this.y = 200;
-        }
+        if (this.y > 200) this.y = 200;
     }
 
     render(ctx) {
         if (this.dead) return;
+        const x = this.x, y = this.y, r = this.radius;
+        let sx = 1, sy = 1;
+        if (this.state === 'stuck') { sx = 0.84; sy = 1.16; }
+        else if (this.state === 'moving_to_wall') { sx = 0.95; sy = 1.05; }
+        ctx.save(); ctx.translate(x, y); ctx.scale(sx, sy);
 
-        const x = this.x;
-        const y = this.y;
-        const r = this.radius;
-
-        let scaleX = 1, scaleY = 1;
-        if (this.state === 'stuck') {
-            scaleX = 0.82;
-            scaleY = 1.18;
-        }
-
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.scale(scaleX, scaleY);
-
-        // Внешнее свечение при прилипании/отлипании
         if (this.glowIntensity > 0) {
-            const glowR = r + 8 + this.glowIntensity * 12;
-            const glowGrad = ctx.createRadialGradient(0, 0, r, 0, 0, glowR);
-            const skin = SkinManager.get(r);
-            glowGrad.addColorStop(0, skin.glow || 'rgba(100, 200, 255, 0.3)');
-            glowGrad.addColorStop(1, 'rgba(100, 200, 255, 0)');
-            ctx.globalAlpha = this.glowIntensity * 0.6;
-            ctx.fillStyle = glowGrad;
-            ctx.beginPath();
-            ctx.arc(0, 0, glowR, 0, Math.PI * 2);
-            ctx.fill();
+            const gr = r + 4 + this.glowIntensity * 8;
+            const gg = ctx.createRadialGradient(0, 0, r, 0, 0, gr);
+            const sk = SkinManager.get(r);
+            gg.addColorStop(0, sk.glow || 'rgba(100,200,255,0.25)');
+            gg.addColorStop(1, 'rgba(100,200,255,0)');
+            ctx.globalAlpha = this.glowIntensity * 0.5;
+            ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, gr, 0, Math.PI * 2); ctx.fill();
             ctx.globalAlpha = 1;
         }
 
-        // Радужный ободок
-        ctx.beginPath();
-        ctx.arc(0, 0, r + 2, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(200, 230, 255, 0.15)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, 0, r + 1.5, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(200,230,255,0.12)'; ctx.lineWidth = 1; ctx.stroke();
 
         const skin = SkinManager.get(r);
-        const grad = ctx.createRadialGradient(-r*0.3, -r*0.3, r*0.1, 0, 0, r);
-        grad.addColorStop(0, skin.highlight);
-        grad.addColorStop(0.3, skin.main);
-        grad.addColorStop(0.8, skin.shadow);
-        grad.addColorStop(1, skin.edge);
+        const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
+        grad.addColorStop(0, skin.highlight); grad.addColorStop(0.3, skin.main);
+        grad.addColorStop(0.8, skin.shadow); grad.addColorStop(1, skin.edge);
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill();
 
-        ctx.beginPath();
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(0, 0, r * 0.7, 0, Math.PI * 2);
-        ctx.fillStyle = skin.innerGlow;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.ellipse(-r*0.35, -r*0.35, r*0.25, r*0.18, -0.5, 0, Math.PI*2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(r*0.3, r*0.4, r*0.08, 0, Math.PI*2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.7, 0, Math.PI * 2); ctx.fillStyle = skin.innerGlow; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-r * 0.35, -r * 0.35, r * 0.25, r * 0.18, -0.5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(r * 0.3, r * 0.4, r * 0.08, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 0.5; ctx.stroke();
         ctx.restore();
     }
 }
 
-// ===== GLASS =====
 class Glass {
     constructor() {
-        this.leftX = 0;
-        this.rightX = 0;
-        this.width = 0;
-        this.wallThickness = 8;
+        this.leftX = 0; this.rightX = 0; this.width = 0; this.wallThickness = 8;
         this.resize();
     }
-
     resize() {
-        this.width = Math.min(Game.width * 0.75, 320);
+        this.width = Math.min(Game.width * 0.78, 340);
         this.leftX = (Game.width - this.width) / 2;
         this.rightX = this.leftX + this.width;
     }
-
-    renderBack(ctx, cameraY) {
-        const h = Game.height + 200;
-        const topY = cameraY - 100;
-        const bottomY = cameraY + h + 100;
-
-        // Внутренняя часть стакана — тёмная жидкость
-        ctx.fillStyle = 'rgba(20, 15, 5, 0.3)';
-        ctx.fillRect(this.leftX, topY, this.width, bottomY - topY);
-
-        // Стенки — полупрозрачные
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-        ctx.fillRect(this.leftX - this.wallThickness/2, topY, this.wallThickness, bottomY - topY);
-        ctx.fillRect(this.rightX - this.wallThickness/2, topY, this.wallThickness, bottomY - topY);
-
-        // Дно стакана
-        const bottomCurve = 30;
+    renderBack(ctx, cy) {
+        const h = Game.height + 200, ty = cy - 100, by = cy + h + 100;
+        ctx.fillStyle = 'rgba(25,20,10,0.25)';
+        ctx.fillRect(this.leftX, ty, this.width, by - ty);
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(this.leftX - this.wallThickness / 2, ty, this.wallThickness, by - ty);
+        ctx.fillRect(this.rightX - this.wallThickness / 2, ty, this.wallThickness, by - ty);
         ctx.beginPath();
-        ctx.moveTo(this.leftX, bottomY - bottomCurve);
-        ctx.quadraticCurveTo(
-            this.leftX + this.width/2, bottomY + bottomCurve,
-            this.rightX, bottomY - bottomCurve
-        );
-        ctx.lineTo(this.rightX, bottomY - bottomCurve - 20);
-        ctx.lineTo(this.leftX, bottomY - bottomCurve - 20);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
-        ctx.fill();
+        ctx.moveTo(this.leftX, by - 30);
+        ctx.quadraticCurveTo(this.leftX + this.width / 2, by + 30, this.rightX, by - 30);
+        ctx.lineTo(this.rightX, by - 50); ctx.lineTo(this.leftX, by - 50); ctx.closePath();
+        ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fill();
     }
-
-    renderFront(ctx, cameraY) {
-        const h = Game.height + 200;
-        const topY = cameraY - 100;
-        const bottomY = cameraY + h + 100;
-
-        const time = Date.now() * 0.001;
-
-        // Блики на стенках
-        const leftShine = Math.sin(time * 0.7) * 0.5 + 0.5;
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.06 * leftShine})`;
-        ctx.fillRect(this.leftX + 2, topY, 3, bottomY - topY);
-
-        const rightShine = Math.sin(time * 0.7 + 1.5) * 0.5 + 0.5;
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.04 * rightShine})`;
-        ctx.fillRect(this.rightX - 5, topY, 2, bottomY - topY);
-
-        // Верхний ободок
+    renderFront(ctx, cy) {
+        const h = Game.height + 200, ty = cy - 100, by = cy + h + 100;
+        const tm = Date.now() * 0.001;
+        const ls = Math.sin(tm * 0.7) * 0.5 + 0.5;
+        ctx.fillStyle = `rgba(255,255,255,${0.06 * ls})`;
+        ctx.fillRect(this.leftX + 2, ty, 3, by - ty);
+        const rs = Math.sin(tm * 0.7 + 1.5) * 0.5 + 0.5;
+        ctx.fillStyle = `rgba(255,255,255,${0.04 * rs})`;
+        ctx.fillRect(this.rightX - 5, ty, 2, by - ty);
         ctx.beginPath();
-        ctx.ellipse(
-            this.leftX + this.width/2, 
-            topY, 
-            this.width/2 + 2, 
-            6, 
-            0, 0, Math.PI*2
-        );
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // Обводка стенок
+        ctx.ellipse(this.leftX + this.width / 2, ty, this.width / 2 + 2, 6, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1.5; ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(this.leftX, topY);
-        ctx.lineTo(this.leftX, bottomY - 30);
-        ctx.quadraticCurveTo(this.leftX, bottomY, this.leftX + 15, bottomY);
-        ctx.moveTo(this.rightX, topY);
-        ctx.lineTo(this.rightX, bottomY - 30);
-        ctx.quadraticCurveTo(this.rightX, bottomY, this.rightX - 15, bottomY);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        ctx.moveTo(this.leftX, ty); ctx.lineTo(this.leftX, by - 30);
+        ctx.quadraticCurveTo(this.leftX, by, this.leftX + 15, by);
+        ctx.moveTo(this.rightX, ty); ctx.lineTo(this.rightX, by - 30);
+        ctx.quadraticCurveTo(this.rightX, by, this.rightX - 15, by);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.stroke();
     }
 }
 
-// ===== CAMERA =====
 class Camera {
-    constructor() {
-        this.y = 0;
-        this.targetY = 0;
-        this.shake = 0;
-        this.shakeDecay = 5;
-    }
-
-    reset() {
-        this.y = 0;
-        this.targetY = 0;
-        this.shake = 0;
-    }
-
-    update(dt, bubbleY) {
-        const target = bubbleY - Game.height * 0.6;
-        this.targetY = Math.min(0, target);
-
+    constructor() { this.y = 0; this.targetY = 0; this.shake = 0; this.shakeDecay = 5; }
+    reset() { this.y = 0; this.targetY = 0; this.shake = 0; }
+    update(dt, by) {
+        const t = by - Game.height * 0.6;
+        this.targetY = Math.min(0, t);
         this.y += (this.targetY - this.y) * 3 * dt;
-
-        if (this.shake > 0) {
-            this.shake -= this.shakeDecay * dt;
-            if (this.shake < 0) this.shake = 0;
-        }
-
-        if (this.shake > 0) {
-            this.y += (Math.random() - 0.5) * this.shake;
-        }
+        if (this.shake > 0) { this.shake -= this.shakeDecay * dt; if (this.shake < 0) this.shake = 0; }
+        if (this.shake > 0) this.y += (Math.random() - 0.5) * this.shake;
     }
-
-    addShake(amount) {
-        this.shake = Math.max(this.shake, amount);
-    }
+    addShake(a) { this.shake = Math.max(this.shake, a); }
 }
 
     </script>
     <script>
-// ===== WORLD =====
-class World {
-    constructor() {
-        this.obstacles = [];
-        this.particles = [];
-        this.lastSpawnY = -200;
-        this.spawnDistance = 250;
-    }
 
-    reset() {
-        this.obstacles = [];
-        this.particles = [];
-        this.lastSpawnY = -200;
-        this.spawnDistance = 250;
-    }
+class World {
+    constructor() { this.obstacles = []; this.particles = []; this.lastSpawnY = -200; this.spawnDistance = 250; }
+    reset() { this.obstacles = []; this.particles = []; this.lastSpawnY = -200; this.spawnDistance = 250; }
 
     update(dt, bubble, cameraY) {
         const spawnY = cameraY - Game.height * 0.5;
         if (spawnY < this.lastSpawnY - this.spawnDistance) {
-            this.spawnObstacle(spawnY);
-            this.lastSpawnY = spawnY;
+            this.spawnObstacle(spawnY); this.lastSpawnY = spawnY;
             this.spawnDistance = Math.max(120, 250 - Game.score * 0.5);
         }
-
-        this.obstacles.forEach(obs => obs.update(dt));
-        this.obstacles = this.obstacles.filter(obs => obs.y < cameraY + Game.height + 200);
-
-        for (const obs of this.obstacles) {
-            if (obs.checkCollision(bubble)) {
-                bubble.dead = true;
-                Game.camera.addShake(8);
-                if (AudioEngine && AudioEngine.ctx) AudioEngine.play('pop');
-                break;
-            }
+        this.obstacles.forEach(o => o.update(dt));
+        this.obstacles = this.obstacles.filter(o => o.y < cameraY + Game.height + 200);
+        for (const o of this.obstacles) {
+            if (o.checkCollision(bubble)) { bubble.dead = true; Game.camera.addShake(8); if (AudioEngine && AudioEngine.ctx) AudioEngine.play('pop'); break; }
         }
-
         this.updateParticles(dt);
-
-        // След за пузырьком
         if (Game.settings.particles && bubble.state === 'floating' && !bubble.dead) {
-            if (Math.random() < 0.25) {
-                this.particles.push({
-                    x: bubble.x + (Math.random() - 0.5) * 8,
-                    y: bubble.y + bubble.radius + 3,
-                    vx: (Math.random() - 0.5) * 15,
-                    vy: 8 + Math.random() * 15,
-                    life: 0.4 + Math.random() * 0.4,
-                    size: 1.5 + Math.random() * 2.5,
-                    color: 'rgba(255, 255, 255, 0.25)',
-                    type: 'trail'
-                });
+            if (Math.random() < 0.2) {
+                this.particles.push({ x: bubble.x + (Math.random() - 0.5) * 6, y: bubble.y + bubble.radius + 2, vx: (Math.random() - 0.5) * 10, vy: 6 + Math.random() * 10, life: 0.35 + Math.random() * 0.35, size: 1.2 + Math.random() * 2, color: 'rgba(255,255,255,0.22)', type: 'trail' });
             }
         }
     }
 
-    updateParticlesOnly(dt) {
-        this.updateParticles(dt);
-    }
-
+    updateParticlesOnly(dt) { this.updateParticles(dt); }
     updateParticles(dt) {
-        this.particles.forEach(p => {
-            p.x += p.vx * dt;
-            p.y += p.vy * dt;
-            p.vy += (p.gravity || 0) * dt;
-            p.life -= dt;
-            p.vx *= 0.98;
-        });
+        this.particles.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.gravity || 0) * dt; p.life -= dt; p.vx *= 0.98; });
         this.particles = this.particles.filter(p => p.life > 0);
     }
 
     spawnObstacle(y) {
         const glass = Game.glass;
-        let availableTypes = ['ice', 'lemon'];
-        if (Game.score > 30) availableTypes.push('mint');
-        if (Game.score > 60) availableTypes.push('straw');
-
-        const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+        let types = ['ice', 'lemon']; if (Game.score > 30) types.push('mint'); if (Game.score > 60) types.push('straw');
+        const type = types[Math.floor(Math.random() * types.length)];
         const x = glass.leftX + 40 + Math.random() * (glass.width - 80);
-
         let obs;
-        switch(type) {
-            case 'ice': obs = new IceCube(x, y); break;
-            case 'lemon': obs = new LemonSlice(x, y); break;
-            case 'straw': obs = new Straw(x, y); break;
-            case 'mint': obs = new MintLeaf(x, y); break;
-        }
-
+        switch (type) { case 'ice': obs = new IceCube(x, y); break; case 'lemon': obs = new LemonSlice(x, y); break; case 'straw': obs = new Straw(x, y); break; case 'mint': obs = new MintLeaf(x, y); break; }
         const tooClose = this.obstacles.some(o => Math.abs(o.y - y) < 80 && Math.abs(o.x - x) < 60);
-        if (!tooClose) {
-            this.obstacles.push(obs);
-        }
+        if (!tooClose) this.obstacles.push(obs);
     }
 
-    renderBackground(ctx, w, h, cameraY) {
-        // Убраны рандомные bgBubbles — фон теперь в drawBackground
-    }
-
-    renderObstacles(ctx, cameraY) {
-        this.obstacles.forEach(obs => obs.render(ctx));
-    }
-
+    renderObstacles(ctx, cameraY) { this.obstacles.forEach(o => o.render(ctx)); }
     renderParticles(ctx, cameraY) {
         this.particles.forEach(p => {
-            const alpha = Math.min(1, p.life / 0.3);
-            ctx.save();
-            ctx.globalAlpha = alpha;
-
-            if (p.type === 'trail') {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-            } else if (p.type === 'splash') {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size * (p.life / p.maxLife), 0, Math.PI*2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-            } else if (p.type === 'spark') {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-            }
-
-            ctx.restore();
+            const a = Math.min(1, p.life / 0.3); ctx.save(); ctx.globalAlpha = a;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (p.type === 'splash' ? p.life / p.maxLife : 1), 0, Math.PI * 2);
+            ctx.fillStyle = p.color; ctx.fill(); ctx.restore();
         });
     }
 
     createStickEffect(x, y, side) {
         if (!Game.settings.particles) return;
         const dir = side === 'left' ? 1 : -1;
-        for (let i = 0; i < 6; i++) {
-            this.particles.push({
-                x: x + dir * 8,
-                y: y + (Math.random() - 0.5) * 16,
-                vx: dir * (15 + Math.random() * 30),
-                vy: (Math.random() - 0.5) * 30,
-                life: 0.25 + Math.random() * 0.25,
-                maxLife: 0.5,
-                size: 1.5 + Math.random() * 2.5,
-                color: 'rgba(200, 230, 255, 0.5)',
-                type: 'splash'
-            });
-        }
+        for (let i = 0; i < 5; i++) this.particles.push({ x: x + dir * 6, y: y + (Math.random() - 0.5) * 12, vx: dir * (12 + Math.random() * 22), vy: (Math.random() - 0.5) * 24, life: 0.2 + Math.random() * 0.2, maxLife: 0.4, size: 1.2 + Math.random() * 2, color: 'rgba(200,230,255,0.45)', type: 'splash' });
     }
-
     createReleaseEffect(x, y) {
         if (!Game.settings.particles) return;
-        for (let i = 0; i < 4; i++) {
-            this.particles.push({
-                x: x + (Math.random() - 0.5) * 16,
-                y: y + 8,
-                vx: (Math.random() - 0.5) * 25,
-                vy: 15 + Math.random() * 25,
-                life: 0.3 + Math.random() * 0.25,
-                maxLife: 0.55,
-                size: 1.5 + Math.random() * 3,
-                color: 'rgba(255, 255, 255, 0.35)',
-                type: 'splash'
-            });
-        }
+        for (let i = 0; i < 3; i++) this.particles.push({ x: x + (Math.random() - 0.5) * 12, y: y + 6, vx: (Math.random() - 0.5) * 18, vy: 10 + Math.random() * 18, life: 0.25 + Math.random() * 0.2, maxLife: 0.45, size: 1.2 + Math.random() * 2.5, color: 'rgba(255,255,255,0.3)', type: 'splash' });
     }
-
-    createDeathExplosion(x, y, radius) {
+    createDeathExplosion(x, y, r) {
         if (!Game.settings.particles) return;
-        for (let i = 0; i < 20; i++) {
-            const angle = (Math.PI * 2 / 20) * i + Math.random() * 0.5;
-            const speed = 50 + Math.random() * 150;
-            this.particles.push({
-                x: x,
-                y: y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                life: 0.5 + Math.random() * 0.5,
-                maxLife: 1.0,
-                size: 2 + Math.random() * 4,
-                color: `rgba(255, ${100 + Math.random()*100}, ${Math.random()*100}, 0.8)`,
-                type: 'spark',
-                gravity: 200
-            });
-        }
-        for (let i = 0; i < 8; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 30 + Math.random() * 80;
-            this.particles.push({
-                x: x,
-                y: y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                life: 0.6 + Math.random() * 0.4,
-                maxLife: 1.0,
-                size: 3 + Math.random() * 5,
-                color: 'rgba(200, 230, 255, 0.5)',
-                type: 'spark',
-                gravity: 100
-            });
-        }
+        for (let i = 0; i < 18; i++) { const ang = (Math.PI * 2 / 18) * i + Math.random() * 0.5; const sp = 40 + Math.random() * 130; this.particles.push({ x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 0.4 + Math.random() * 0.4, maxLife: 0.8, size: 1.5 + Math.random() * 3.5, color: `rgba(255,${100 + Math.random() * 100},${Math.random() * 100},0.75)`, type: 'spark', gravity: 180 }); }
+        for (let i = 0; i < 6; i++) { const ang = Math.random() * Math.PI * 2; const sp = 25 + Math.random() * 60; this.particles.push({ x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 0.5 + Math.random() * 0.3, maxLife: 0.8, size: 2.5 + Math.random() * 4, color: 'rgba(200,230,255,0.45)', type: 'spark', gravity: 80 }); }
     }
 }
 
-// ===== OBSTACLES =====
-
 class Obstacle {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.rotation = 0;
-        this.rotSpeed = (Math.random() - 0.5) * 2;
-        this.vy = 0;
-    }
-
-    update(dt) {
-        this.rotation += this.rotSpeed * dt;
-    }
-
-    render(ctx) {}
-
-    checkCollision(bubble) {
-        return false;
-    }
+    constructor(x, y) { this.x = x; this.y = y; this.rotation = 0; this.rotSpeed = (Math.random() - 0.5) * 2; }
+    update(dt) { this.rotation += this.rotSpeed * dt; }
+    render(ctx) { }
+    checkCollision(bubble) { return false; }
 }
 
 class IceCube extends Obstacle {
     constructor(x, y) {
-        super(x, y);
-        this.size = 28 + Math.random() * 14;
-        this.rotSpeed = (Math.random() - 0.5) * 1.2;
+        super(x, y); this.size = 26 + Math.random() * 14; this.rotSpeed = (Math.random() - 0.5) * 1;
         this.floatPhase = Math.random() * Math.PI * 2;
-        // Внутренние пузырьки воздуха в льду
-        this.bubbles = [];
-        for (let i = 0; i < 4; i++) {
-            this.bubbles.push({
-                bx: (Math.random() - 0.5) * 0.6,
-                by: (Math.random() - 0.5) * 0.6,
-                br: 0.08 + Math.random() * 0.12
-            });
-        }
+        this.bubbles = []; for (let i = 0; i < 5; i++) this.bubbles.push({ bx: (Math.random() - 0.5) * 0.5, by: (Math.random() - 0.5) * 0.5, br: 0.06 + Math.random() * 0.1 });
     }
-
-    update(dt) {
-        super.update(dt);
-        this.floatPhase += dt * 1.8;
-        this.y += Math.sin(this.floatPhase) * 8 * dt;
-    }
-
+    update(dt) { super.update(dt); this.floatPhase += dt * 1.8; this.y += Math.sin(this.floatPhase) * 7 * dt; }
     render(ctx) {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
-
-        const s = this.size;
-        const half = s / 2;
-
-        // Тень/основание
-        ctx.fillStyle = 'rgba(150, 200, 230, 0.15)';
-        ctx.fillRect(-half - 2, -half - 2, s + 4, s + 4);
-
+        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+        const s = this.size, h = s / 2;
+        // Тень
+        ctx.fillStyle = 'rgba(100,150,200,0.08)';
+        ctx.fillRect(-h - 3, -h - 3, s + 6, s + 6);
         // Основной куб с градиентом
-        const grad = ctx.createLinearGradient(-half, -half, half, half);
-        grad.addColorStop(0, 'rgba(220, 240, 255, 0.45)');
-        grad.addColorStop(0.5, 'rgba(180, 220, 250, 0.35)');
-        grad.addColorStop(1, 'rgba(140, 200, 240, 0.25)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(-half, -half, s, s);
-
-        // Грани — яркие
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(-half, -half, s, s);
-
-        // Внутренние грани (3D эффект)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(-half + s*0.3, -half);
-        ctx.lineTo(-half + s*0.3, half);
-        ctx.moveTo(-half, -half + s*0.4);
-        ctx.lineTo(half, -half + s*0.4);
-        ctx.stroke();
-
-        // Внутренние пузырьки воздуха
+        const g = ctx.createLinearGradient(-h, -h, h, h);
+        g.addColorStop(0, 'rgba(230,245,255,0.5)'); g.addColorStop(0.5, 'rgba(190,225,250,0.38)'); g.addColorStop(1, 'rgba(160,210,245,0.28)');
+        ctx.fillStyle = g; ctx.fillRect(-h, -h, s, s);
+        // Грани
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1.2; ctx.strokeRect(-h, -h, s, s);
+        // Внутренние пузырьки
         this.bubbles.forEach(b => {
-            ctx.beginPath();
-            ctx.arc(b.bx * s, b.by * s, b.br * s, 0, Math.PI*2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-            // Блик в пузырьке
-            ctx.beginPath();
-            ctx.arc(b.bx * s - b.br*s*0.2, b.by * s - b.br*s*0.2, b.br*s*0.3, 0, Math.PI*2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(b.bx * s, b.by * s, b.br * s, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 0.4; ctx.stroke();
+            ctx.beginPath(); ctx.arc(b.bx * s - b.br * s * 0.25, b.by * s - b.br * s * 0.25, b.br * s * 0.3, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fill();
         });
-
-        // Главный блик на верхнем ребре
-        ctx.beginPath();
-        ctx.moveTo(-half, -half);
-        ctx.lineTo(-half + s*0.4, -half);
-        ctx.lineTo(-half, -half + s*0.4);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.fill();
-
-        // Боковой блик
-        ctx.beginPath();
-        ctx.moveTo(half, half);
-        ctx.lineTo(half - s*0.3, half);
-        ctx.lineTo(half, half - s*0.3);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-        ctx.fill();
-
+        // Блики на рёбрах
+        ctx.beginPath(); ctx.moveTo(-h, -h); ctx.lineTo(-h + s * 0.35, -h); ctx.lineTo(-h, -h + s * 0.35); ctx.closePath();
+        ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(h, h); ctx.lineTo(h - s * 0.2, h); ctx.lineTo(h, h - s * 0.2); ctx.closePath();
+        ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fill();
         ctx.restore();
     }
-
     checkCollision(bubble) {
-        const s = this.size / 2;
-        const cos = Math.cos(-this.rotation);
-        const sin = Math.sin(-this.rotation);
-
-        const dx = bubble.x - this.x;
-        const dy = bubble.y - this.y;
-        const localX = dx * cos - dy * sin;
-        const localY = dx * sin + dy * cos;
-
-        const closestX = Math.max(-s, Math.min(s, localX));
-        const closestY = Math.max(-s, Math.min(s, localY));
-
-        const distX = localX - closestX;
-        const distY = localY - closestY;
-
-        return (distX * distX + distY * distY) < (bubble.radius * bubble.radius);
+        const s = this.size / 2, c = Math.cos(-this.rotation), si = Math.sin(-this.rotation);
+        const dx = bubble.x - this.x, dy = bubble.y - this.y;
+        const lx = dx * c - dy * si, ly = dx * si + dy * c;
+        const cx = Math.max(-s, Math.min(s, lx)), cy = Math.max(-s, Math.min(s, ly));
+        return (lx - cx) ** 2 + (ly - cy) ** 2 < bubble.radius ** 2;
     }
 }
 
 class LemonSlice extends Obstacle {
-    constructor(x, y) {
-        super(x, y);
-        this.radius = 24 + Math.random() * 10;
-        this.rotSpeed = (Math.random() - 0.5) * 2.5;
-        this.pulsePhase = Math.random() * Math.PI * 2;
-    }
-
-    update(dt) {
-        super.update(dt);
-        this.pulsePhase += dt * 2.5;
-    }
-
+    constructor(x, y) { super(x, y); this.radius = 24 + Math.random() * 10; this.rotSpeed = (Math.random() - 0.5) * 2.5; this.pulsePhase = Math.random() * Math.PI * 2; }
+    update(dt) { super.update(dt); this.pulsePhase += dt * 2.5; }
     render(ctx) {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
-
-        const r = this.radius;
-        const pulse = 1 + Math.sin(this.pulsePhase) * 0.04;
-
-        // Кожура — тёмно-жёлтая
-        ctx.beginPath();
-        ctx.arc(0, 0, r * pulse, 0, Math.PI * 2);
-        ctx.fillStyle = '#e6c200';
-        ctx.fill();
-        ctx.strokeStyle = '#cc9900';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Альбедо (белый слой)
-        ctx.beginPath();
-        ctx.arc(0, 0, r * 0.9 * pulse, 0, Math.PI * 2);
-        ctx.fillStyle = '#fff8dc';
-        ctx.fill();
-
-        // Мякоть — ярко-жёлтая
-        ctx.beginPath();
-        ctx.arc(0, 0, r * 0.82 * pulse, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffe135';
-        ctx.fill();
-
-        // Дольки
-        const segments = 9;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.lineWidth = 1.2;
-        for (let i = 0; i < segments; i++) {
-            const angle = (Math.PI * 2 / segments) * i;
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(Math.cos(angle) * r * 0.78, Math.sin(angle) * r * 0.78);
-            ctx.stroke();
-
-            // Сочность — градиент в каждой дольке
-            const nextAngle = (Math.PI * 2 / segments) * (i + 1);
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.arc(0, 0, r * 0.75, angle + 0.05, nextAngle - 0.05);
-            ctx.closePath();
-            ctx.fillStyle = 'rgba(255, 240, 150, 0.15)';
-            ctx.fill();
-        }
-
-        // Центр
-        ctx.beginPath();
-        ctx.arc(0, 0, r * 0.12, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.fill();
-
-        // Блик на кожуре
-        ctx.beginPath();
-        ctx.arc(-r*0.5, -r*0.5, r*0.15, 0, Math.PI*2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fill();
-
+        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+        const r = this.radius, p = 1 + Math.sin(this.pulsePhase) * 0.04;
+        ctx.beginPath(); ctx.arc(0, 0, r * p, 0, Math.PI * 2); ctx.fillStyle = '#e6c200'; ctx.fill(); ctx.strokeStyle = '#cc9900'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.9 * p, 0, Math.PI * 2); ctx.fillStyle = '#fff8dc'; ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.82 * p, 0, Math.PI * 2); ctx.fillStyle = '#ffe135'; ctx.fill();
+        const segs = 9; ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.2;
+        for (let i = 0; i < segs; i++) { const a = (Math.PI * 2 / segs) * i; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * r * 0.78, Math.sin(a) * r * 0.78); ctx.stroke(); }
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.12, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(-r * 0.5, -r * 0.5, r * 0.15, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fill();
         ctx.restore();
     }
-
-    checkCollision(bubble) {
-        const dx = bubble.x - this.x;
-        const dy = bubble.y - this.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        return dist < (this.radius + bubble.radius * 0.8);
-    }
+    checkCollision(bubble) { const dx = bubble.x - this.x, dy = bubble.y - this.y; return Math.sqrt(dx * dx + dy * dy) < this.radius + bubble.radius * 0.8; }
 }
 
 class Straw extends Obstacle {
-    constructor(x, y) {
-        super(x, y);
-        this.width = 10;
-        this.height = 70 + Math.random() * 35;
-        this.rotSpeed = (Math.random() - 0.5) * 0.8;
-        this.tiltPhase = Math.random() * Math.PI * 2;
-    }
-
-    update(dt) {
-        this.tiltPhase += dt * 1.2;
-        this.rotation += this.rotSpeed * dt + Math.sin(this.tiltPhase) * 0.4 * dt;
-    }
-
+    constructor(x, y) { super(x, y); this.width = 10; this.height = 70 + Math.random() * 30; this.rotSpeed = (Math.random() - 0.5) * 0.7; this.tiltPhase = Math.random() * Math.PI * 2; }
+    update(dt) { this.tiltPhase += dt * 1.2; this.rotation += this.rotSpeed * dt + Math.sin(this.tiltPhase) * 0.35 * dt; }
     render(ctx) {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
-
-        const w = this.width;
-        const h = this.height;
-
-        // Тень
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-        ctx.fillRect(-w/2 + 2, -h/2 + 2, w, h);
-
-        // Полоски
-        const stripeCount = Math.floor(h / 8);
-        for (let i = 0; i < stripeCount; i++) {
-            const sy = -h/2 + i * 8;
-            const color = i % 2 === 0 ? '#ff5555' : '#ffffff';
-            ctx.fillStyle = color;
-            ctx.fillRect(-w/2, sy, w, 8);
-        }
-
-        // Обводка
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(-w/2, -h/2, w, h);
-
-        // Блик
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-        ctx.fillRect(-w/2 + 1.5, -h/2, 2.5, h);
-
-        // Верхний срез (овал)
-        ctx.beginPath();
-        ctx.ellipse(0, -h/2, w/2, 3, 0, 0, Math.PI*2);
-        ctx.fillStyle = '#ff5555';
-        ctx.fill();
-
+        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+        const w = this.width, h = this.height;
+        ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fillRect(-w / 2 + 2, -h / 2 + 2, w, h);
+        const sc = Math.floor(h / 8);
+        for (let i = 0; i < sc; i++) { ctx.fillStyle = i % 2 === 0 ? '#ff5555' : '#ffffff'; ctx.fillRect(-w / 2, -h / 2 + i * 8, w, 8); }
+        ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 1; ctx.strokeRect(-w / 2, -h / 2, w, h);
+        ctx.fillStyle = 'rgba(255,255,255,0.22)'; ctx.fillRect(-w / 2 + 1.5, -h / 2, 2.5, h);
+        ctx.beginPath(); ctx.ellipse(0, -h / 2, w / 2, 3, 0, 0, Math.PI * 2); ctx.fillStyle = '#ff5555'; ctx.fill();
         ctx.restore();
     }
-
     checkCollision(bubble) {
-        const cos = Math.cos(-this.rotation);
-        const sin = Math.sin(-this.rotation);
-        const dx = bubble.x - this.x;
-        const dy = bubble.y - this.y;
-        const localX = dx * cos - dy * sin;
-        const localY = dx * sin + dy * cos;
-
-        const hw = this.width / 2 + bubble.radius * 0.5;
-        const hh = this.height / 2 + bubble.radius * 0.5;
-
-        return Math.abs(localX) < hw && Math.abs(localY) < hh;
+        const c = Math.cos(-this.rotation), s = Math.sin(-this.rotation);
+        const dx = bubble.x - this.x, dy = bubble.y - this.y;
+        const lx = dx * c - dy * s, ly = dx * s + dy * c;
+        return Math.abs(lx) < this.width / 2 + bubble.radius * 0.5 && Math.abs(ly) < this.height / 2 + bubble.radius * 0.5;
     }
 }
 
 class MintLeaf extends Obstacle {
-    constructor(x, y) {
-        super(x, y);
-        this.size = 22 + Math.random() * 10;
-        this.rotSpeed = (Math.random() - 0.5) * 1.8;
-        this.swayPhase = Math.random() * Math.PI * 2;
-    }
-
-    update(dt) {
-        super.update(dt);
-        this.swayPhase += dt * 1.8;
-        this.x += Math.sin(this.swayPhase) * 12 * dt;
-
-        const glass = Game.glass;
-        const margin = this.size;
-        if (this.x < glass.leftX + margin) this.x = glass.leftX + margin;
-        if (this.x > glass.rightX - margin) this.x = glass.rightX - margin;
-    }
-
+    constructor(x, y) { super(x, y); this.size = 22 + Math.random() * 10; this.rotSpeed = (Math.random() - 0.5) * 1.6; this.swayPhase = Math.random() * Math.PI * 2; }
+    update(dt) { super.update(dt); this.swayPhase += dt * 1.8; this.x += Math.sin(this.swayPhase) * 10 * dt; const g = Game.glass, m = this.size; if (this.x < g.leftX + m) this.x = g.leftX + m; if (this.x > g.rightX - m) this.x = g.rightX - m; }
     render(ctx) {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation + Math.sin(this.swayPhase) * 0.25);
-
+        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation + Math.sin(this.swayPhase) * 0.22);
         const s = this.size;
-
-        // Тень
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
-        ctx.beginPath();
-        ctx.ellipse(2, 2, s * 0.5, s * 0.95, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Основной лист — градиент
-        const leafGrad = ctx.createLinearGradient(0, -s, 0, s);
-        leafGrad.addColorStop(0, '#66bb6a');
-        leafGrad.addColorStop(0.5, '#4caf50');
-        leafGrad.addColorStop(1, '#388e3c');
-
-        ctx.beginPath();
-        ctx.ellipse(0, 0, s * 0.5, s, 0, 0, Math.PI * 2);
-        ctx.fillStyle = leafGrad;
-        ctx.fill();
-
-        // Обводка
-        ctx.strokeStyle = '#2e7d32';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Центральная жилка
-        ctx.beginPath();
-        ctx.moveTo(0, -s * 0.9);
-        ctx.lineTo(0, s * 0.9);
-        ctx.strokeStyle = '#2e7d32';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // Боковые жилки
+        ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.beginPath(); ctx.ellipse(2, 2, s * 0.48, s * 0.92, 0, 0, Math.PI * 2); ctx.fill();
+        const lg = ctx.createLinearGradient(0, -s, 0, s); lg.addColorStop(0, '#66bb6a'); lg.addColorStop(0.5, '#4caf50'); lg.addColorStop(1, '#388e3c');
+        ctx.beginPath(); ctx.ellipse(0, 0, s * 0.48, s * 0.92, 0, 0, Math.PI * 2); ctx.fillStyle = lg; ctx.fill();
+        ctx.strokeStyle = '#2e7d32'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, -s * 0.88); ctx.lineTo(0, s * 0.88); ctx.strokeStyle = '#2e7d32'; ctx.lineWidth = 1.2; ctx.stroke();
         for (let i = -0.7; i <= 0.7; i += 0.35) {
-            const yPos = i * s;
-            ctx.beginPath();
-            ctx.moveTo(0, yPos);
-            ctx.quadraticCurveTo(s * 0.25, yPos + s * 0.15, s * 0.4, yPos + s * 0.3);
-            ctx.moveTo(0, yPos);
-            ctx.quadraticCurveTo(-s * 0.25, yPos + s * 0.15, -s * 0.4, yPos + s * 0.3);
-            ctx.strokeStyle = 'rgba(46, 125, 50, 0.4)';
-            ctx.lineWidth = 0.7;
-            ctx.stroke();
+            const yy = i * s; ctx.beginPath(); ctx.moveTo(0, yy); ctx.quadraticCurveTo(s * 0.22, yy + s * 0.12, s * 0.38, yy + s * 0.22); ctx.strokeStyle = 'rgba(46,125,50,0.35)'; ctx.lineWidth = 0.6; ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, yy); ctx.quadraticCurveTo(-s * 0.22, yy + s * 0.12, -s * 0.38, yy + s * 0.22); ctx.stroke();
         }
-
-        // Блик
-        ctx.beginPath();
-        ctx.ellipse(-s*0.08, -s*0.35, s*0.12, s*0.35, -0.3, 0, Math.PI*2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.fill();
-
+        ctx.beginPath(); ctx.ellipse(-s * 0.08, -s * 0.32, s * 0.12, s * 0.32, -0.3, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fill();
         ctx.restore();
     }
-
-    checkCollision(bubble) {
-        const dx = bubble.x - this.x;
-        const dy = bubble.y - this.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        return dist < (this.size * 0.7 + bubble.radius * 0.8);
-    }
+    checkCollision(bubble) { const dx = bubble.x - this.x, dy = bubble.y - this.y; return Math.sqrt(dx * dx + dy * dy) < this.size * 0.7 + bubble.radius * 0.8; }
 }
 
     </script>
     <script>
-// ===== AUDIO ENGINE v4 =====
+
 const AudioEngine = {
-    ctx: null,
-    enabled: true,
-
-    init() {
-        try {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        } catch(e) {
-            console.log('Web Audio not supported');
-        }
-    },
-
-    play(type) {
-        if (!this.ctx || !this.enabled || !Game.settings.sound) return;
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-
-        switch(type) {
-            case 'stick': this.playStick(); break;
-            case 'release': this.playRelease(); break;
-            case 'pop': this.playPop(); break;
-            case 'combo': this.playCombo(); break;
-        }
-    },
+    ctx: null, enabled: true,
+    init() { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} },
+    play(type) { if (!this.ctx || !this.enabled || !Game.settings.sound) return; if (this.ctx.state === 'suspended') this.ctx.resume(); switch(type) { case 'stick': this.playStick(); break; case 'release': this.playRelease(); break; case 'pop': this.playPop(); break; case 'combo': this.playCombo(); break; } },
 
     playStick() {
         const t = this.ctx.currentTime;
-
-        // Мягкий "плюх" — низкая частота с быстрым спадом
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        const filter = this.ctx.createBiquadFilter();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(180, t);
-        osc.frequency.exponentialRampToValueAtTime(60, t + 0.12);
-
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(600, t);
-        filter.frequency.exponentialRampToValueAtTime(150, t + 0.1);
-        filter.Q.setValueAtTime(2, t);
-
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.35, t + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
-
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start(t);
-        osc.stop(t + 0.18);
-
-        // Второй тон — "всплеск"
-        const osc2 = this.ctx.createOscillator();
-        const gain2 = this.ctx.createGain();
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(350, t + 0.03);
-        osc2.frequency.exponentialRampToValueAtTime(120, t + 0.1);
-        gain2.gain.setValueAtTime(0, t + 0.03);
-        gain2.gain.linearRampToValueAtTime(0.12, t + 0.05);
-        gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.14);
-        osc2.connect(gain2);
-        gain2.connect(this.ctx.destination);
-        osc2.start(t + 0.03);
-        osc2.stop(t + 0.15);
+        const o = this.ctx.createOscillator(), g = this.ctx.createGain(), f = this.ctx.createBiquadFilter();
+        o.type = 'sine'; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(50, t + 0.12);
+        f.type = 'lowpass'; f.frequency.setValueAtTime(500, t); f.frequency.exponentialRampToValueAtTime(120, t + 0.1); f.Q.setValueAtTime(2, t);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.3, t + 0.02); g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+        o.connect(f); f.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + 0.18);
+        const o2 = this.ctx.createOscillator(), g2 = this.ctx.createGain();
+        o2.type = 'sine'; o2.frequency.setValueAtTime(300, t + 0.03); o2.frequency.exponentialRampToValueAtTime(100, t + 0.1);
+        g2.gain.setValueAtTime(0, t + 0.03); g2.gain.linearRampToValueAtTime(0.1, t + 0.05); g2.gain.exponentialRampToValueAtTime(0.01, t + 0.13);
+        o2.connect(g2); g2.connect(this.ctx.destination); o2.start(t + 0.03); o2.stop(t + 0.15);
     },
 
     playRelease() {
         const t = this.ctx.currentTime;
-
-        // Лёгкий "бульк" — пузырёк отрывается
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(280, t);
-        osc.frequency.exponentialRampToValueAtTime(500, t + 0.06);
-
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.18, t + 0.015);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start(t);
-        osc.stop(t + 0.12);
-
-        // Второй пузырёк
-        setTimeout(() => {
-            if (!this.ctx) return;
-            const t2 = this.ctx.currentTime;
-            const osc2 = this.ctx.createOscillator();
-            const gain2 = this.ctx.createGain();
-            osc2.type = 'sine';
-            osc2.frequency.setValueAtTime(420, t2);
-            osc2.frequency.exponentialRampToValueAtTime(650, t2 + 0.04);
-            gain2.gain.setValueAtTime(0, t2);
-            gain2.gain.linearRampToValueAtTime(0.1, t2 + 0.01);
-            gain2.gain.exponentialRampToValueAtTime(0.01, t2 + 0.07);
-            osc2.connect(gain2);
-            gain2.connect(this.ctx.destination);
-            osc2.start(t2);
-            osc2.stop(t2 + 0.1);
-        }, 50);
+        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(250, t); o.frequency.exponentialRampToValueAtTime(450, t + 0.06);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.15, t + 0.015); g.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + 0.12);
+        setTimeout(() => { if (!this.ctx) return; const t2 = this.ctx.currentTime; const o2 = this.ctx.createOscillator(), g2 = this.ctx.createGain(); o2.type = 'sine'; o2.frequency.setValueAtTime(380, t2); o2.frequency.exponentialRampToValueAtTime(580, t2 + 0.04); g2.gain.setValueAtTime(0, t2); g2.gain.linearRampToValueAtTime(0.08, t2 + 0.01); g2.gain.exponentialRampToValueAtTime(0.01, t2 + 0.07); o2.connect(g2); g2.connect(this.ctx.destination); o2.start(t2); o2.stop(t2 + 0.1); }, 50);
     },
 
     playPop() {
         const t = this.ctx.currentTime;
-
-        // Мощный шумовой взрыв
-        const bufferSize = this.ctx.sampleRate * 0.2;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            const env = Math.pow(1 - i / bufferSize, 1.5);
-            data[i] = (Math.random() * 2 - 1) * env;
-        }
-
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buffer;
-
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(3000, t);
-        filter.frequency.exponentialRampToValueAtTime(800, t + 0.15);
-        filter.Q.setValueAtTime(1.5, t);
-
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.5, t);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-
-        noise.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.ctx.destination);
-        noise.start(t);
-
-        // Хруст — высокочастотный
-        const osc = this.ctx.createOscillator();
-        const oscGain = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(4000, t);
-        osc.frequency.exponentialRampToValueAtTime(200, t + 0.15);
-        oscGain.gain.setValueAtTime(0.15, t);
-        oscGain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
-        osc.connect(oscGain);
-        oscGain.connect(this.ctx.destination);
-        osc.start(t);
-        osc.stop(t + 0.18);
-
-        // Низкий "бух"
-        const osc3 = this.ctx.createOscillator();
-        const gain3 = this.ctx.createGain();
-        osc3.type = 'sine';
-        osc3.frequency.setValueAtTime(100, t);
-        osc3.frequency.exponentialRampToValueAtTime(30, t + 0.2);
-        gain3.gain.setValueAtTime(0.3, t);
-        gain3.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
-        osc3.connect(gain3);
-        gain3.connect(this.ctx.destination);
-        osc3.start(t);
-        osc3.stop(t + 0.3);
+        const bs = this.ctx.sampleRate * 0.18, b = this.ctx.createBuffer(1, bs, this.ctx.sampleRate), d = b.getChannelData(0);
+        for (let i = 0; i < bs; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bs, 1.5);
+        const n = this.ctx.createBufferSource(); n.buffer = b;
+        const f = this.ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.setValueAtTime(2500, t); f.frequency.exponentialRampToValueAtTime(600, t + 0.15); f.Q.setValueAtTime(1.5, t);
+        const g = this.ctx.createGain(); g.gain.setValueAtTime(0.45, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+        n.connect(f); f.connect(g); g.connect(this.ctx.destination); n.start(t);
+        const o = this.ctx.createOscillator(), og = this.ctx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(3500, t); o.frequency.exponentialRampToValueAtTime(150, t + 0.14); og.gain.setValueAtTime(0.12, t); og.gain.exponentialRampToValueAtTime(0.01, t + 0.12); o.connect(og); og.connect(this.ctx.destination); o.start(t); o.stop(t + 0.16);
+        const o3 = this.ctx.createOscillator(), g3 = this.ctx.createGain(); o3.type = 'sine'; o3.frequency.setValueAtTime(80, t); o3.frequency.exponentialRampToValueAtTime(25, t + 0.22); g3.gain.setValueAtTime(0.25, t); g3.gain.exponentialRampToValueAtTime(0.01, t + 0.25); o3.connect(g3); g3.connect(this.ctx.destination); o3.start(t); o3.stop(t + 0.3);
     },
 
     playCombo() {
-        const t = this.ctx.currentTime;
-        const notes = [523, 659, 784, 1047];
-
-        notes.forEach((freq, i) => {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, t + i * 0.08);
-            gain.gain.setValueAtTime(0, t + i * 0.08);
-            gain.gain.linearRampToValueAtTime(0.15, t + i * 0.08 + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.08 + 0.25);
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start(t + i * 0.08);
-            osc.stop(t + i * 0.08 + 0.3);
-        });
+        const t = this.ctx.currentTime, notes = [523, 659, 784, 1047];
+        notes.forEach((fr, i) => { const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(fr, t + i * 0.08); g.gain.setValueAtTime(0, t + i * 0.08); g.gain.linearRampToValueAtTime(0.12, t + i * 0.08 + 0.02); g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.08 + 0.25); o.connect(g); g.connect(this.ctx.destination); o.start(t + i * 0.08); o.stop(t + i * 0.08 + 0.3); });
     }
 };
 
-// ===== SKINS =====
 const SkinManager = {
     list: [
-        { id: 'default', name: 'Классик', price: 0, 
-          colors: { main: 'rgba(100, 200, 255, 0.3)', highlight: 'rgba(255, 255, 255, 0.8)', 
-                   shadow: 'rgba(50, 100, 200, 0.2)', edge: 'rgba(100, 200, 255, 0.1)', 
-                   innerGlow: 'rgba(150, 220, 255, 0.15)', glow: 'rgba(100, 200, 255, 0.3)' }},
-        { id: 'gold', name: 'Золото', price: 100,
-          colors: { main: 'rgba(255, 215, 0, 0.4)', highlight: 'rgba(255, 255, 200, 0.9)',
-                   shadow: 'rgba(200, 150, 0, 0.3)', edge: 'rgba(255, 200, 0, 0.2)', 
-                   innerGlow: 'rgba(255, 230, 100, 0.2)', glow: 'rgba(255, 215, 0, 0.4)' }},
-        { id: 'soap', name: 'Мыло', price: 150,
-          colors: { main: 'rgba(255, 200, 220, 0.3)', highlight: 'rgba(255, 255, 255, 0.9)',
-                   shadow: 'rgba(255, 150, 180, 0.2)', edge: 'rgba(255, 200, 220, 0.15)', 
-                   innerGlow: 'rgba(255, 220, 230, 0.2)', glow: 'rgba(255, 200, 220, 0.3)' }},
-        { id: 'plasma', name: 'Плазма', price: 200,
-          colors: { main: 'rgba(150, 0, 255, 0.3)', highlight: 'rgba(200, 100, 255, 0.8)',
-                   shadow: 'rgba(100, 0, 200, 0.3)', edge: 'rgba(150, 50, 255, 0.2)', 
-                   innerGlow: 'rgba(180, 50, 255, 0.2)', glow: 'rgba(150, 0, 255, 0.4)' }},
-        { id: 'cosmic', name: 'Галактика', price: 300,
-          colors: { main: 'rgba(100, 0, 150, 0.4)', highlight: 'rgba(200, 150, 255, 0.8)',
-                   shadow: 'rgba(50, 0, 100, 0.3)', edge: 'rgba(150, 100, 255, 0.2)', 
-                   innerGlow: 'rgba(120, 50, 200, 0.25)', glow: 'rgba(150, 100, 255, 0.4)' }},
-        { id: 'coffee', name: 'Кофе', price: 250,
-          colors: { main: 'rgba(139, 90, 43, 0.4)', highlight: 'rgba(255, 230, 200, 0.8)',
-                   shadow: 'rgba(100, 60, 20, 0.3)', edge: 'rgba(139, 90, 43, 0.2)', 
-                   innerGlow: 'rgba(180, 140, 100, 0.2)', glow: 'rgba(139, 90, 43, 0.4)' }},
-        { id: 'neon', name: 'Неон', price: 350,
-          colors: { main: 'rgba(0, 255, 150, 0.3)', highlight: 'rgba(200, 255, 230, 0.9)',
-                   shadow: 'rgba(0, 200, 100, 0.3)', edge: 'rgba(0, 255, 150, 0.2)', 
-                   innerGlow: 'rgba(50, 255, 180, 0.25)', glow: 'rgba(0, 255, 150, 0.4)' }}
+        { id: 'default', name: 'Классик', price: 0, colors: { main: 'rgba(100,200,255,0.3)', highlight: 'rgba(255,255,255,0.8)', shadow: 'rgba(50,100,200,0.2)', edge: 'rgba(100,200,255,0.1)', innerGlow: 'rgba(150,220,255,0.15)', glow: 'rgba(100,200,255,0.3)' } },
+        { id: 'gold', name: 'Золото', price: 80, colors: { main: 'rgba(255,215,0,0.4)', highlight: 'rgba(255,255,200,0.9)', shadow: 'rgba(200,150,0,0.3)', edge: 'rgba(255,200,0,0.2)', innerGlow: 'rgba(255,230,100,0.2)', glow: 'rgba(255,215,0,0.4)' } },
+        { id: 'soap', name: 'Мыло', price: 120, colors: { main: 'rgba(255,200,220,0.3)', highlight: 'rgba(255,255,255,0.9)', shadow: 'rgba(255,150,180,0.2)', edge: 'rgba(255,200,220,0.15)', innerGlow: 'rgba(255,220,230,0.2)', glow: 'rgba(255,200,220,0.3)' } },
+        { id: 'plasma', name: 'Плазма', price: 160, colors: { main: 'rgba(150,0,255,0.3)', highlight: 'rgba(200,100,255,0.8)', shadow: 'rgba(100,0,200,0.3)', edge: 'rgba(150,50,255,0.2)', innerGlow: 'rgba(180,50,255,0.2)', glow: 'rgba(150,0,255,0.4)' } },
+        { id: 'cosmic', name: 'Галактика', price: 250, colors: { main: 'rgba(100,0,150,0.4)', highlight: 'rgba(200,150,255,0.8)', shadow: 'rgba(50,0,100,0.3)', edge: 'rgba(150,100,255,0.2)', innerGlow: 'rgba(120,50,200,0.25)', glow: 'rgba(150,100,255,0.4)' } },
+        { id: 'coffee', name: 'Кофе', price: 200, colors: { main: 'rgba(139,90,43,0.4)', highlight: 'rgba(255,230,200,0.8)', shadow: 'rgba(100,60,20,0.3)', edge: 'rgba(139,90,43,0.2)', innerGlow: 'rgba(180,140,100,0.2)', glow: 'rgba(139,90,43,0.4)' } },
+        { id: 'neon', name: 'Неон', price: 300, colors: { main: 'rgba(0,255,150,0.3)', highlight: 'rgba(200,255,230,0.9)', shadow: 'rgba(0,200,100,0.3)', edge: 'rgba(0,255,150,0.2)', innerGlow: 'rgba(50,255,180,0.25)', glow: 'rgba(0,255,150,0.4)' } },
+        { id: 'ruby', name: 'Рубин', price: 180, colors: { main: 'rgba(220,20,60,0.35)', highlight: 'rgba(255,150,150,0.85)', shadow: 'rgba(150,0,0,0.3)', edge: 'rgba(220,20,60,0.2)', innerGlow: 'rgba(255,100,100,0.2)', glow: 'rgba(220,20,60,0.35)' } },
+        { id: 'emerald', name: 'Изумруд', price: 180, colors: { main: 'rgba(0,200,100,0.35)', highlight: 'rgba(150,255,200,0.85)', shadow: 'rgba(0,120,50,0.3)', edge: 'rgba(0,200,100,0.2)', innerGlow: 'rgba(100,255,150,0.2)', glow: 'rgba(0,200,100,0.35)' } },
+        { id: 'shadow', name: 'Тень', price: 350, colors: { main: 'rgba(80,80,100,0.5)', highlight: 'rgba(200,200,220,0.7)', shadow: 'rgba(30,30,50,0.4)', edge: 'rgba(80,80,100,0.3)', innerGlow: 'rgba(120,120,150,0.25)', glow: 'rgba(100,100,130,0.3)' } },
+        { id: 'candy', name: 'Конфета', price: 220, colors: { main: 'rgba(255,105,180,0.35)', highlight: 'rgba(255,220,240,0.9)', shadow: 'rgba(200,50,120,0.3)', edge: 'rgba(255,105,180,0.2)', innerGlow: 'rgba(255,180,220,0.2)', glow: 'rgba(255,105,180,0.35)' } },
+        { id: 'ice', name: 'Лёд', price: 280, colors: { main: 'rgba(200,240,255,0.4)', highlight: 'rgba(255,255,255,0.95)', shadow: 'rgba(100,180,220,0.3)', edge: 'rgba(200,240,255,0.25)', innerGlow: 'rgba(220,250,255,0.3)', glow: 'rgba(200,240,255,0.4)' } }
     ],
-
     unlocked: ['default'],
-
-    init() {
-        try {
-            const save = JSON.parse(localStorage.getItem('bubble_skins') || '[]');
-            this.unlocked = [...new Set(['default', ...save])];
-        } catch(e) {}
-    },
-
-    get(radius) {
-        const skin = this.list.find(s => s.id === Game.currentSkin) || this.list[0];
-        return skin.colors;
-    },
-
-    isUnlocked(id) {
-        return this.unlocked.includes(id);
-    },
-
-    unlock(id) {
-        if (!this.unlocked.includes(id)) {
-            this.unlocked.push(id);
-            localStorage.setItem('bubble_skins', JSON.stringify(this.unlocked));
-        }
-    },
+    init() { try { const s = JSON.parse(localStorage.getItem('bubble_skins') || '[]'); this.unlocked = [...new Set(['default', ...s])]; } catch(e) {} },
+    get(r) { return (this.list.find(s => s.id === Game.currentSkin) || this.list[0]).colors; },
+    isUnlocked(id) { return this.unlocked.includes(id); },
+    unlock(id) { if (!this.unlocked.includes(id)) { this.unlocked.push(id); localStorage.setItem('bubble_skins', JSON.stringify(this.unlocked)); } },
 
     renderGrid() {
-        const grid = document.getElementById('skins-grid');
-        grid.innerHTML = '';
-
+        const grid = document.getElementById('skins-grid'); grid.innerHTML = '';
         this.list.forEach(skin => {
-            const isActive = Game.currentSkin === skin.id;
-            const isUnlocked = this.unlocked.includes(skin.id);
-
+            const active = Game.currentSkin === skin.id, unlocked = this.unlocked.includes(skin.id);
+            const c = skin.colors;
             const card = document.createElement('div');
-            card.className = `skin-card ${isActive ? 'active' : ''} ${!isUnlocked ? 'locked' : ''}`;
+            card.className = `skin-card ${active ? 'active' : ''} ${!unlocked ? 'locked' : ''}`;
+            // Реалистичный пузырёк через CSS градиенты
             card.innerHTML = `
-                <div class="skin-preview" style="background: ${skin.colors.main}; box-shadow: inset 0 0 10px ${skin.colors.shadow};"></div>
+                <div class="skin-preview" style="
+                    background: radial-gradient(circle at 30% 30%, ${c.highlight}, ${c.main}, ${c.shadow});
+                    box-shadow: 0 0 12px ${c.glow.replace(')', ',0.4)')}, inset 0 0 10px rgba(255,255,255,0.15);
+                    border: 1px solid ${c.edge};
+                "></div>
                 <div class="skin-name">${skin.name}</div>
-                ${!isUnlocked ? `<div class="skin-price">💎 ${skin.price}</div>` : ''}
-                ${isActive ? '<div class="skin-check">✓</div>' : ''}
+                ${!unlocked ? `<div class="skin-price">💎 ${skin.price}</div>` : ''}
+                ${active ? '<div class="skin-check">✓</div>' : ''}
             `;
-
             card.addEventListener('click', () => {
-                if (isActive) return;
-
-                if (isUnlocked) {
-                    Game.currentSkin = skin.id;
-                    Game.save();
-                    this.renderGrid();
-                    if (AudioEngine && AudioEngine.ctx) AudioEngine.play('combo');
-                } else if (Game.coins >= skin.price) {
-                    Game.coins -= skin.price;
-                    this.unlock(skin.id);
-                    Game.currentSkin = skin.id;
-                    Game.save();
-                    this.renderGrid();
-                    Game.updateHUD();
-                    if (AudioEngine && AudioEngine.ctx) AudioEngine.play('combo');
-                } else {
-                    card.style.animation = 'shake 0.3s ease';
-                    setTimeout(() => card.style.animation = '', 300);
-                }
+                if (active) return;
+                if (unlocked) { Game.currentSkin = skin.id; Game.save(); this.renderGrid(); if (AudioEngine && AudioEngine.ctx) AudioEngine.play('combo'); }
+                else if (Game.coins >= skin.price) { Game.coins -= skin.price; this.unlock(skin.id); Game.currentSkin = skin.id; Game.save(); this.renderGrid(); Game.updateHUD(); if (AudioEngine && AudioEngine.ctx) AudioEngine.play('combo'); }
+                else { card.style.animation = 'shake 0.3s ease'; setTimeout(() => card.style.animation = '', 300); }
             });
-
             grid.appendChild(card);
         });
     }
 };
 
-// ===== UI MANAGER =====
 function showScreen(name) {
     document.querySelectorAll('#ui-layer .screen').forEach(s => s.classList.remove('active'));
-    const target = document.getElementById(name);
-    if (target) target.classList.add('active');
+    const t = document.getElementById(name);
+    if (t) { t.classList.add('active'); }
+    // Блюр фона в меню
+    const canvas = document.getElementById('game-canvas');
+    if (name === 'main-menu' || name === 'skins-screen' || name === 'settings-screen') {
+        canvas.style.filter = 'blur(10px) brightness(0.35)';
+    } else if (name === 'hud') {
+        canvas.style.filter = 'none';
+    } else if (name === 'game-over') {
+        canvas.style.filter = 'blur(6px) brightness(0.5)';
+    }
 }
+function hideAllScreens() { document.querySelectorAll('#ui-layer .screen').forEach(s => s.classList.remove('active')); }
 
-function hideAllScreens() {
-    document.querySelectorAll('#ui-layer .screen').forEach(s => s.classList.remove('active'));
-}
-
-// ===== EVENT LISTENERS =====
 document.addEventListener('DOMContentLoaded', () => {
-    AudioEngine.init();
-    SkinManager.init();
-    Game.world = new World();
-    Game.init();
-
-    showScreen('main-menu');
-    Game.updateHUD();
+    AudioEngine.init(); SkinManager.init(); Game.world = new World(); Game.init();
+    showScreen('main-menu'); Game.updateHUD();
 
     document.getElementById('btn-play').addEventListener('click', () => {
         if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
-
-        const hasPlayed = localStorage.getItem('bubble_played');
-        if (!hasPlayed) {
-            showScreen('tutorial');
-        } else {
-            hideAllScreens();
-            showScreen('hud');
-            Game.start();
-        }
+        if (!localStorage.getItem('bubble_played')) { showScreen('tutorial'); }
+        else { hideAllScreens(); showScreen('hud'); Game.start(); }
     });
+    document.getElementById('btn-skins').addEventListener('click', () => { if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick'); SkinManager.renderGrid(); showScreen('skins-screen'); });
+    document.getElementById('btn-settings').addEventListener('click', () => { if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick'); updateSettingsUI(); showScreen('settings-screen'); });
+    document.getElementById('btn-tutorial-ok').addEventListener('click', () => { localStorage.setItem('bubble_played', 'true'); if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release'); hideAllScreens(); showScreen('hud'); Game.start(); });
+    document.getElementById('btn-restart').addEventListener('click', () => { if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release'); hideAllScreens(); showScreen('hud'); Game.start(); });
+    document.getElementById('btn-menu').addEventListener('click', () => { if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick'); showScreen('main-menu'); Game.updateHUD(); });
+    document.getElementById('btn-skins-back').addEventListener('click', () => { if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick'); showScreen('main-menu'); });
+    document.getElementById('btn-settings-back').addEventListener('click', () => { if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick'); Game.save(); showScreen('main-menu'); });
 
-    document.getElementById('btn-skins').addEventListener('click', () => {
-        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick');
-        SkinManager.renderGrid();
-        showScreen('skins-screen');
-    });
+    document.getElementById('toggle-sound').addEventListener('click', function() { Game.settings.sound = !Game.settings.sound; this.classList.toggle('active'); this.textContent = Game.settings.sound ? 'ON' : 'OFF'; if (Game.settings.sound && AudioEngine && AudioEngine.ctx) AudioEngine.play('release'); });
+    document.getElementById('toggle-vibro').addEventListener('click', function() { Game.settings.vibration = !Game.settings.vibration; this.classList.toggle('active'); this.textContent = Game.settings.vibration ? 'ON' : 'OFF'; });
+    document.getElementById('toggle-particles').addEventListener('click', function() { Game.settings.particles = !Game.settings.particles; this.classList.toggle('active'); this.textContent = Game.settings.particles ? 'ON' : 'OFF'; });
 
-    document.getElementById('btn-settings').addEventListener('click', () => {
-        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick');
-        updateSettingsUI();
-        showScreen('settings-screen');
-    });
+    function updateSettingsUI() { const s = Game.settings, ut = (id, v) => { const b = document.getElementById(id); b.classList.toggle('active', v); b.textContent = v ? 'ON' : 'OFF'; }; ut('toggle-sound', s.sound); ut('toggle-vibro', s.vibration); ut('toggle-particles', s.particles); }
 
-    document.getElementById('btn-tutorial-ok').addEventListener('click', () => {
-        localStorage.setItem('bubble_played', 'true');
-        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
-        hideAllScreens();
-        showScreen('hud');
-        Game.start();
-    });
-
-    document.getElementById('btn-restart').addEventListener('click', () => {
-        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
-        hideAllScreens();
-        showScreen('hud');
-        Game.start();
-    });
-
-    document.getElementById('btn-menu').addEventListener('click', () => {
-        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick');
-        showScreen('main-menu');
-        Game.updateHUD();
-    });
-
-    document.getElementById('btn-skins-back').addEventListener('click', () => {
-        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick');
-        showScreen('main-menu');
-    });
-
-    document.getElementById('btn-settings-back').addEventListener('click', () => {
-        if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick');
-        Game.save();
-        showScreen('main-menu');
-    });
-
-    document.getElementById('toggle-sound').addEventListener('click', function() {
-        Game.settings.sound = !Game.settings.sound;
-        this.classList.toggle('active');
-        this.textContent = Game.settings.sound ? 'ON' : 'OFF';
-        if (Game.settings.sound && AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
-    });
-
-    document.getElementById('toggle-vibro').addEventListener('click', function() {
-        Game.settings.vibration = !Game.settings.vibration;
-        this.classList.toggle('active');
-        this.textContent = Game.settings.vibration ? 'ON' : 'OFF';
-    });
-
-    document.getElementById('toggle-particles').addEventListener('click', function() {
-        Game.settings.particles = !Game.settings.particles;
-        this.classList.toggle('active');
-        this.textContent = Game.settings.particles ? 'ON' : 'OFF';
-    });
-
-    function updateSettingsUI() {
-        const s = Game.settings;
-        const updateToggle = (id, val) => {
-            const btn = document.getElementById(id);
-            btn.classList.toggle('active', val);
-            btn.textContent = val ? 'ON' : 'OFF';
-        };
-        updateToggle('toggle-sound', s.sound);
-        updateToggle('toggle-vibro', s.vibration);
-        updateToggle('toggle-particles', s.particles);
-    }
-
-    document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' || e.code === 'ArrowUp') {
-            if (Game.state === 'playing' && Game.bubble) {
-                Game.isPressed = true;
-                Game.bubble.stick('left');
-            }
-        }
-    });
-
-    document.addEventListener('keyup', (e) => {
-        if (e.code === 'Space' || e.code === 'ArrowUp') {
-            if (Game.state === 'playing' && Game.bubble) {
-                Game.isPressed = false;
-                Game.bubble.release();
-            }
-        }
-    });
-
-    document.addEventListener('touchmove', (e) => {
-        if (Game.state === 'playing') e.preventDefault();
-    }, { passive: false });
+    document.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') { if (Game.state === 'playing' && Game.bubble) { Game.isPressed = true; Game.bubble.startMovingToWall('left'); } } });
+    document.addEventListener('keyup', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') { if (Game.state === 'playing' && Game.bubble) { Game.isPressed = false; Game.bubble.release(); } } });
+    document.addEventListener('touchmove', (e) => { if (Game.state === 'playing') e.preventDefault(); }, { passive: false });
 });
 
     </script>
