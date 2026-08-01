@@ -671,7 +671,7 @@ html, body {
             <div id="tutorial" class="screen">
                 <div class="tutorial-content">
                     <div class="tutorial-hand">👆</div>
-                    <p class="tutorial-text">Нажми ЛЕВУЮ половину — прилипнешь к ЛЕВОЙ стенке<br>Нажми ПРАВУЮ половину — прилипнешь к ПРАВОЙ<br>Отпусти — вернёшься в центр</p>
+                    <p class="tutorial-text">Нажми ЛЕВУЮ половину — прилипнешь к ЛЕВОЙ стенке<br>Нажми ПРАВУЮ половину — прилипнешь к ПРАВОЙ<br>Отпусти — отлипнешь и поплывёшь дальше</p>
                     <button class="btn btn-primary" id="btn-tutorial-ok">ПОНЯТНО</button>
                 </div>
             </div>
@@ -873,7 +873,6 @@ const Game = {
         ctx.clearRect(0, 0, w, h);
         this.drawBackground(ctx, w, h);
 
-        // Подсказка зон тапа во время игры
         if (this.state === 'playing') {
             this.drawTapZones(ctx, w, h);
         }
@@ -914,18 +913,12 @@ const Game = {
     },
 
     drawTapZones(ctx, w, h) {
-        // Лёгкая подсветка зон тапа
         const zoneAlpha = 0.03;
-
-        // Левая зона
         ctx.fillStyle = `rgba(100, 200, 255, ${this.isPressed && this.touchSide === 'left' ? 0.08 : zoneAlpha})`;
         ctx.fillRect(0, 0, w/2, h);
-
-        // Правая зона
         ctx.fillStyle = `rgba(100, 200, 255, ${this.isPressed && this.touchSide === 'right' ? 0.08 : zoneAlpha})`;
         ctx.fillRect(w/2, 0, w/2, h);
 
-        // Разделительная линия
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
         ctx.lineWidth = 1;
         ctx.setLineDash([5, 10]);
@@ -999,21 +992,18 @@ class Bubble {
         this.wobblePhase = 0;
         this.baseSpeed = 120;
         this.maxSpeed = 350;
-        this.centerX = 0;
         this.resize();
     }
 
     resize() {
-        this.centerX = Game.width / 2;
         if (Game.state !== 'playing') {
-            this.x = this.centerX;
+            this.x = Game.width / 2;
             this.y = Game.height * 0.7;
         }
     }
 
     reset() {
-        this.centerX = Game.width / 2;
-        this.x = this.centerX;
+        this.x = Game.width / 2;
         this.y = 0;
         this.vx = 0;
         this.vy = 0;
@@ -1029,7 +1019,6 @@ class Bubble {
         this.state = 'stuck';
         this.stuckSide = side;
 
-        // Комбо за каждое прилипание
         Game.combo++;
         if (Game.combo > Game.maxCombo) Game.maxCombo = Game.combo;
         Game.updateHUD();
@@ -1049,11 +1038,14 @@ class Bubble {
         if (this.state !== 'stuck' || this.dead) return;
 
         this.state = 'floating';
-        this.releaseImpulse = 40;
 
-        // Импульс к центру
-        const dirToCenter = this.centerX > this.x ? 1 : -1;
-        this.vx = dirToCenter * 80;
+        // НЕТ возврата в центр — просто отлипаем и летим дальше
+        // Небольшой импульс от стены
+        if (this.stuckSide === 'left') {
+            this.vx = 15;
+        } else {
+            this.vx = -15;
+        }
 
         this.stuckSide = null;
 
@@ -1068,7 +1060,6 @@ class Bubble {
         if (this.dead) return;
 
         this.wobblePhase += dt * 3;
-        this.centerX = Game.width / 2;
 
         const glass = Game.glass;
         const speed = Math.min(this.baseSpeed + Game.score * 1.5, this.maxSpeed);
@@ -1076,20 +1067,9 @@ class Bubble {
         if (this.state === 'floating') {
             this.vy = -speed;
 
-            if (this.releaseImpulse > 0) {
-                this.vy -= this.releaseImpulse;
-                this.releaseImpulse *= Math.pow(0.1, dt);
-                if (this.releaseImpulse < 1) this.releaseImpulse = 0;
-            }
-
-            // Покачивание
-            this.vx += Math.sin(this.wobblePhase) * 40 * dt;
-
-            // Притяжение к центру (слабое, чтобы не мешать уклонению)
-            const distToCenter = this.centerX - this.x;
-            this.vx += distToCenter * 2 * dt;
-
-            this.vx *= 0.92;
+            // МЕДЛЕННОЕ боковое покачивание
+            this.vx += Math.sin(this.wobblePhase) * 20 * dt;
+            this.vx *= 0.95;
 
             this.x += this.vx * dt;
             this.y += this.vy * dt;
@@ -1105,7 +1085,8 @@ class Bubble {
             }
 
         } else if (this.state === 'stuck') {
-            this.vy = 0;
+            // ЗАМЕДЛЕНИЕ в 2 раза вместо остановки
+            this.vy = -speed * 0.5;
             this.vx = 0;
 
             const targetX = this.stuckSide === 'left' 
@@ -1113,6 +1094,7 @@ class Bubble {
                 : glass.rightX - this.radius - 4;
 
             this.x += (targetX - this.x) * 15 * dt;
+            this.y += this.vy * dt;
         }
 
         if (this.y > 200) {
