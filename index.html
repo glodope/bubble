@@ -158,7 +158,7 @@ html,body { width:100%; height:100%; overflow:hidden; background:#0a0a1a; font-f
             <div id="tutorial" class="screen">
                 <div class="tutorial-content">
                     <div class="tutorial-hand">👆</div>
-                    <p class="tutorial-text">Нажми ЛЕВУЮ половину — шарик рванёт влево и отскочит от стенки<br>Нажми ПРАВУЮ — рванёт вправо и отскочит<br>Тапай в ритме, чтобы пролетать препятствия</p>
+                    <p class="tutorial-text">Нажми ЛЕВУЮ половину — пузырёк получит толчок влево<br>Нажми ПРАВУЮ — толчок вправо<br>Скорость падает, тапай в ритме, чтобы маневрировать</p>
                     <button class="btn btn-primary" id="btn-tutorial-ok">ПОНЯТНО</button>
                 </div>
             </div>
@@ -282,25 +282,25 @@ const Game = {
     drawBackground(ctx, w, h) {
         const time = Date.now() * 0.0003;
         const hueShift = Math.sin(time) * 8;
+        const theme = SkinManager.getTheme();
         const g = ctx.createLinearGradient(0, 0, 0, h);
-        g.addColorStop(0, `hsl(${33 + hueShift}, 55%, 7%)`);
-        g.addColorStop(0.3, `hsl(${36 + hueShift}, 50%, 10%)`);
-        g.addColorStop(0.6, `hsl(${40 + hueShift}, 45%, 13%)`);
-        g.addColorStop(1, `hsl(${28 + hueShift}, 65%, 5%)`);
+        theme.stops.forEach((stop, i) => {
+            g.addColorStop(i / (theme.stops.length - 1), `hsl(${stop.h + hueShift}, ${stop.s}%, ${stop.l}%)`);
+        });
         ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
         for (let i = 0; i < 5; i++) {
             const ph = time * 0.5 + i * 1.2;
             const x = w * (0.15 + 0.7 * ((Math.sin(ph * 0.7) + 1) / 2));
             const a = 0.012 + Math.sin(ph) * 0.006;
             const rg = ctx.createLinearGradient(x - 30, 0, x + 30, 0);
-            rg.addColorStop(0, 'rgba(255,210,120,0)');
-            rg.addColorStop(0.5, `rgba(255,200,90,${a})`);
-            rg.addColorStop(1, 'rgba(255,210,120,0)');
+            rg.addColorStop(0, `rgba(${theme.ray[0]},${theme.ray[1]},${theme.ray[2]},0)`);
+            rg.addColorStop(0.5, `rgba(${theme.ray[0]},${theme.ray[1]},${theme.ray[2]},${a})`);
+            rg.addColorStop(1, `rgba(${theme.ray[0]},${theme.ray[1]},${theme.ray[2]},0)`);
             ctx.fillStyle = rg; ctx.fillRect(x - 30, 0, 60, h);
         }
         for (let i = 0; i < 3; i++) {
             const y = (time * 25 + i * h / 3) % (h + 100) - 50;
-            ctx.fillStyle = `rgba(255,170,50,${0.015 + Math.sin(time + i) * 0.008})`;
+            ctx.fillStyle = `rgba(${theme.wave[0]},${theme.wave[1]},${theme.wave[2]},${0.015 + Math.sin(time + i) * 0.008})`;
             ctx.beginPath(); ctx.moveTo(0, y);
             for (let x = 0; x <= w; x += 20) ctx.lineTo(x, y + Math.sin(x * 0.008 + time + i) * 12);
             ctx.lineTo(w, y + 35); ctx.lineTo(0, y + 35); ctx.closePath(); ctx.fill();
@@ -362,6 +362,8 @@ class Bubble {
         if (this.dead) return;
         this.state = 'moving_to_wall';
         this.targetSide = side;
+        const dir = side === 'left' ? -1 : 1;
+        this.vx = dir * 420;
         this.glowIntensity = 0.7;
         this.impactSquash = 1.0;
         if (Game.settings.vibration && navigator.vibrate) navigator.vibrate(10);
@@ -390,29 +392,37 @@ class Bubble {
             this.vx *= Math.pow(0.08, dt);
             this.vx += Math.sin(this.wobblePhase) * 6 * dt;
             this.x += this.vx * dt; this.y += this.vy * dt;
-            if (this.x - margin < glass.leftX) { this.x = glass.leftX + margin; this.vx = Math.abs(this.vx) * 0.3; }
-            if (this.x + margin > glass.rightX) { this.x = glass.rightX - margin; this.vx = -Math.abs(this.vx) * 0.3; }
         } else if (this.state === 'moving_to_wall') {
             this.vy = -speed;
-            const targetX = this.targetSide === 'left' ? glass.leftX + margin : glass.rightX - margin;
-            const dir = targetX > this.x ? 1 : -1;
-            this.vx = dir * 280;
+            this.vx *= Math.pow(0.22, dt);
             this.x += this.vx * dt; this.y += this.vy * dt;
-            if (this.targetSide === 'left' && this.x <= glass.leftX + margin + 2) {
-                this.x = glass.leftX + margin; this.state = 'floating';
-                this.vx = 200;
+            if (Math.abs(this.vx) < 25) {
+                this.state = 'floating';
+            }
+        }
+
+        // Стенки и отскоки
+        if (this.x - margin < glass.leftX) {
+            this.x = glass.leftX + margin;
+            if (this.vx < 0) {
+                this.vx = Math.abs(this.vx) * 0.35;
                 this.impactSquash = 1.0;
+                this.state = 'floating';
                 if (Game.world) Game.world.createStickEffect(this.x, this.y, 'left');
                 if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
             }
-            if (this.targetSide === 'right' && this.x >= glass.rightX - margin - 2) {
-                this.x = glass.rightX - margin; this.state = 'floating';
-                this.vx = -200;
+        }
+        if (this.x + margin > glass.rightX) {
+            this.x = glass.rightX - margin;
+            if (this.vx > 0) {
+                this.vx = -Math.abs(this.vx) * 0.35;
                 this.impactSquash = 1.0;
+                this.state = 'floating';
                 if (Game.world) Game.world.createStickEffect(this.x, this.y, 'right');
                 if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
             }
         }
+
         if (this.y > 200) this.y = 200;
     }
 
@@ -745,22 +755,23 @@ const AudioEngine = {
 
 const SkinManager = {
     list: [
-        { id: 'default', name: 'Классик', price: 0, colors: { main: 'rgba(100,200,255,0.3)', highlight: 'rgba(255,255,255,0.8)', shadow: 'rgba(50,100,200,0.2)', edge: 'rgba(100,200,255,0.1)', innerGlow: 'rgba(150,220,255,0.15)', glow: 'rgba(100,200,255,0.3)' } },
-        { id: 'gold', name: 'Золото', price: 80, colors: { main: 'rgba(255,215,0,0.4)', highlight: 'rgba(255,255,200,0.9)', shadow: 'rgba(200,150,0,0.3)', edge: 'rgba(255,200,0,0.2)', innerGlow: 'rgba(255,230,100,0.2)', glow: 'rgba(255,215,0,0.4)' } },
-        { id: 'soap', name: 'Мыло', price: 120, colors: { main: 'rgba(255,200,220,0.3)', highlight: 'rgba(255,255,255,0.9)', shadow: 'rgba(255,150,180,0.2)', edge: 'rgba(255,200,220,0.15)', innerGlow: 'rgba(255,220,230,0.2)', glow: 'rgba(255,200,220,0.3)' } },
-        { id: 'plasma', name: 'Плазма', price: 160, colors: { main: 'rgba(150,0,255,0.3)', highlight: 'rgba(200,100,255,0.8)', shadow: 'rgba(100,0,200,0.3)', edge: 'rgba(150,50,255,0.2)', innerGlow: 'rgba(180,50,255,0.2)', glow: 'rgba(150,0,255,0.4)' } },
-        { id: 'cosmic', name: 'Галактика', price: 250, colors: { main: 'rgba(100,0,150,0.4)', highlight: 'rgba(200,150,255,0.8)', shadow: 'rgba(50,0,100,0.3)', edge: 'rgba(150,100,255,0.2)', innerGlow: 'rgba(120,50,200,0.25)', glow: 'rgba(150,100,255,0.4)' } },
-        { id: 'coffee', name: 'Кофе', price: 200, colors: { main: 'rgba(139,90,43,0.4)', highlight: 'rgba(255,230,200,0.8)', shadow: 'rgba(100,60,20,0.3)', edge: 'rgba(139,90,43,0.2)', innerGlow: 'rgba(180,140,100,0.2)', glow: 'rgba(139,90,43,0.4)' } },
-        { id: 'neon', name: 'Неон', price: 300, colors: { main: 'rgba(0,255,150,0.3)', highlight: 'rgba(200,255,230,0.9)', shadow: 'rgba(0,200,100,0.3)', edge: 'rgba(0,255,150,0.2)', innerGlow: 'rgba(50,255,180,0.25)', glow: 'rgba(0,255,150,0.4)' } },
-        { id: 'ruby', name: 'Рубин', price: 180, colors: { main: 'rgba(220,20,60,0.35)', highlight: 'rgba(255,150,150,0.85)', shadow: 'rgba(150,0,0,0.3)', edge: 'rgba(220,20,60,0.2)', innerGlow: 'rgba(255,100,100,0.2)', glow: 'rgba(220,20,60,0.35)' } },
-        { id: 'emerald', name: 'Изумруд', price: 180, colors: { main: 'rgba(0,200,100,0.35)', highlight: 'rgba(150,255,200,0.85)', shadow: 'rgba(0,120,50,0.3)', edge: 'rgba(0,200,100,0.2)', innerGlow: 'rgba(100,255,150,0.2)', glow: 'rgba(0,200,100,0.35)' } },
-        { id: 'shadow', name: 'Тень', price: 350, colors: { main: 'rgba(80,80,100,0.5)', highlight: 'rgba(200,200,220,0.7)', shadow: 'rgba(30,30,50,0.4)', edge: 'rgba(80,80,100,0.3)', innerGlow: 'rgba(120,120,150,0.25)', glow: 'rgba(100,100,130,0.3)' } },
-        { id: 'candy', name: 'Конфета', price: 220, colors: { main: 'rgba(255,105,180,0.35)', highlight: 'rgba(255,220,240,0.9)', shadow: 'rgba(200,50,120,0.3)', edge: 'rgba(255,105,180,0.2)', innerGlow: 'rgba(255,180,220,0.2)', glow: 'rgba(255,105,180,0.35)' } },
-        { id: 'ice', name: 'Лёд', price: 280, colors: { main: 'rgba(200,240,255,0.4)', highlight: 'rgba(255,255,255,0.95)', shadow: 'rgba(100,180,220,0.3)', edge: 'rgba(200,240,255,0.25)', innerGlow: 'rgba(220,250,255,0.3)', glow: 'rgba(200,240,255,0.4)' } }
+        { id: 'default', name: 'Классик', price: 0, colors: { main: 'rgba(100,200,255,0.3)', highlight: 'rgba(255,255,255,0.8)', shadow: 'rgba(50,100,200,0.2)', edge: 'rgba(100,200,255,0.1)', innerGlow: 'rgba(150,220,255,0.15)', glow: 'rgba(100,200,255,0.3)' }, theme: { stops: [{h:33,s:55,l:7},{h:36,s:50,l:10},{h:40,s:45,l:13},{h:28,s:65,l:5}], ray: [255,210,120], wave: [255,170,50] } },
+        { id: 'gold', name: 'Золото', price: 80, colors: { main: 'rgba(255,215,0,0.4)', highlight: 'rgba(255,255,200,0.9)', shadow: 'rgba(200,150,0,0.3)', edge: 'rgba(255,200,0,0.2)', innerGlow: 'rgba(255,230,100,0.2)', glow: 'rgba(255,215,0,0.4)' }, theme: { stops: [{h:38,s:60,l:6},{h:42,s:55,l:9},{h:45,s:50,l:11},{h:32,s:70,l:4}], ray: [255,200,80], wave: [255,160,40] } },
+        { id: 'soap', name: 'Мыло', price: 120, colors: { main: 'rgba(255,200,220,0.3)', highlight: 'rgba(255,255,255,0.9)', shadow: 'rgba(255,150,180,0.2)', edge: 'rgba(255,200,220,0.15)', innerGlow: 'rgba(255,220,230,0.2)', glow: 'rgba(255,200,220,0.3)' }, theme: { stops: [{h:320,s:40,l:8},{h:325,s:35,l:11},{h:330,s:45,l:14},{h:315,s:50,l:6}], ray: [255,180,200], wave: [255,150,180] } },
+        { id: 'plasma', name: 'Плазма', price: 160, colors: { main: 'rgba(150,0,255,0.3)', highlight: 'rgba(200,100,255,0.8)', shadow: 'rgba(100,0,200,0.3)', edge: 'rgba(150,50,255,0.2)', innerGlow: 'rgba(180,50,255,0.2)', glow: 'rgba(150,0,255,0.4)' }, theme: { stops: [{h:270,s:50,l:6},{h:275,s:45,l:9},{h:280,s:55,l:12},{h:265,s:60,l:4}], ray: [200,100,255], wave: [180,80,220] } },
+        { id: 'cosmic', name: 'Галактика', price: 250, colors: { main: 'rgba(100,0,150,0.4)', highlight: 'rgba(200,150,255,0.8)', shadow: 'rgba(50,0,100,0.3)', edge: 'rgba(150,100,255,0.2)', innerGlow: 'rgba(120,50,200,0.25)', glow: 'rgba(150,100,255,0.4)' }, theme: { stops: [{h:260,s:55,l:5},{h:265,s:50,l:8},{h:270,s:60,l:11},{h:255,s:65,l:3}], ray: [180,120,255], wave: [150,100,220] } },
+        { id: 'coffee', name: 'Кофе', price: 200, colors: { main: 'rgba(139,90,43,0.4)', highlight: 'rgba(255,230,200,0.8)', shadow: 'rgba(100,60,20,0.3)', edge: 'rgba(139,90,43,0.2)', innerGlow: 'rgba(180,140,100,0.2)', glow: 'rgba(139,90,43,0.4)' }, theme: { stops: [{h:25,s:50,l:6},{h:28,s:45,l:9},{h:32,s:40,l:12},{h:22,s:60,l:4}], ray: [220,180,120], wave: [200,150,100] } },
+        { id: 'neon', name: 'Неон', price: 300, colors: { main: 'rgba(0,255,150,0.3)', highlight: 'rgba(200,255,230,0.9)', shadow: 'rgba(0,200,100,0.3)', edge: 'rgba(0,255,150,0.2)', innerGlow: 'rgba(50,255,180,0.25)', glow: 'rgba(0,255,150,0.4)' }, theme: { stops: [{h:145,s:55,l:5},{h:150,s:50,l:8},{h:155,s:60,l:11},{h:140,s:65,l:3}], ray: [100,255,180], wave: [80,220,150] } },
+        { id: 'ruby', name: 'Рубин', price: 180, colors: { main: 'rgba(220,20,60,0.35)', highlight: 'rgba(255,150,150,0.85)', shadow: 'rgba(150,0,0,0.3)', edge: 'rgba(220,20,60,0.2)', innerGlow: 'rgba(255,100,100,0.2)', glow: 'rgba(220,20,60,0.35)' }, theme: { stops: [{h:350,s:55,l:6},{h:355,s:50,l:9},{h:360,s:60,l:12},{h:345,s:65,l:4}], ray: [255,120,120], wave: [255,80,80] } },
+        { id: 'emerald', name: 'Изумруд', price: 180, colors: { main: 'rgba(0,200,100,0.35)', highlight: 'rgba(150,255,200,0.85)', shadow: 'rgba(0,120,50,0.3)', edge: 'rgba(0,200,100,0.2)', innerGlow: 'rgba(100,255,150,0.2)', glow: 'rgba(0,200,100,0.35)' }, theme: { stops: [{h:140,s:50,l:5},{h:145,s:45,l:8},{h:150,s:55,l:11},{h:135,s:60,l:3}], ray: [100,255,150], wave: [80,220,120] } },
+        { id: 'shadow', name: 'Тень', price: 350, colors: { main: 'rgba(80,80,100,0.5)', highlight: 'rgba(200,200,220,0.7)', shadow: 'rgba(30,30,50,0.4)', edge: 'rgba(80,80,100,0.3)', innerGlow: 'rgba(120,120,150,0.25)', glow: 'rgba(100,100,130,0.3)' }, theme: { stops: [{h:220,s:20,l:6},{h:225,s:15,l:9},{h:230,s:25,l:12},{h:215,s:30,l:4}], ray: [180,180,200], wave: [150,150,170] } },
+        { id: 'candy', name: 'Конфета', price: 220, colors: { main: 'rgba(255,105,180,0.35)', highlight: 'rgba(255,220,240,0.9)', shadow: 'rgba(200,50,120,0.3)', edge: 'rgba(255,105,180,0.2)', innerGlow: 'rgba(255,180,220,0.2)', glow: 'rgba(255,105,180,0.35)' }, theme: { stops: [{h:330,s:50,l:7},{h:335,s:45,l:10},{h:340,s:55,l:13},{h:325,s:60,l:5}], ray: [255,150,200], wave: [255,120,180] } },
+        { id: 'ice', name: 'Лёд', price: 280, colors: { main: 'rgba(200,240,255,0.4)', highlight: 'rgba(255,255,255,0.95)', shadow: 'rgba(100,180,220,0.3)', edge: 'rgba(200,240,255,0.25)', innerGlow: 'rgba(220,250,255,0.3)', glow: 'rgba(200,240,255,0.4)' }, theme: { stops: [{h:195,s:50,l:7},{h:200,s:45,l:10},{h:205,s:55,l:13},{h:190,s:60,l:5}], ray: [180,230,255], wave: [150,210,240] } }
     ],
     unlocked: ['default'],
     init() { try { const s = JSON.parse(localStorage.getItem('bubble_skins') || '[]'); this.unlocked = [...new Set(['default', ...s])]; } catch(e) {} },
     get(r) { return (this.list.find(s => s.id === Game.currentSkin) || this.list[0]).colors; },
+    getTheme() { return (this.list.find(s => s.id === Game.currentSkin) || this.list[0]).theme; },
     isUnlocked(id) { return this.unlocked.includes(id); },
     unlock(id) { if (!this.unlocked.includes(id)) { this.unlocked.push(id); localStorage.setItem('bubble_skins', JSON.stringify(this.unlocked)); } },
 
