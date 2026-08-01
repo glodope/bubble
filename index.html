@@ -139,7 +139,7 @@ html,body { width:100%; height:100%; overflow:hidden; background:#0a0a1a; font-f
             <div id="skins-screen" class="screen">
                 <div class="menu-glass skins-glass">
                     <h2 class="screen-title">СКИНЫ</h2>
-                    <div class="coins-display">💎 <span id="coins-count">0</span></div>
+                    <div class="coins-display">🪙 <span id="coins-count">0</span></div>
                     <div class="skins-grid" id="skins-grid"></div>
                     <button class="btn btn-back" id="btn-skins-back">← НАЗАД</button>
                 </div>
@@ -531,20 +531,32 @@ class Camera {
     <script>
 
 class World {
-    constructor() { this.obstacles = []; this.particles = []; this.lastSpawnY = -200; this.spawnDistance = 250; }
-    reset() { this.obstacles = []; this.particles = []; this.lastSpawnY = -200; this.spawnDistance = 250; }
+    constructor() { this.obstacles = []; this.particles = []; this.coins = []; this.lastSpawnY = -200; this.spawnDistance = 250; }
+    reset() { this.obstacles = []; this.particles = []; this.coins = []; this.lastSpawnY = -200; this.spawnDistance = 250; }
 
     update(dt, bubble, cameraY) {
         const spawnY = cameraY - Game.height * 0.5;
         if (spawnY < this.lastSpawnY - this.spawnDistance) {
             this.spawnObstacle(spawnY); this.lastSpawnY = spawnY;
             this.spawnDistance = Math.max(120, 250 - Game.score * 0.5);
+            if (Math.random() < 0.22) this.spawnCoin(spawnY + this.spawnDistance * 0.5);
         }
         this.obstacles.forEach(o => o.update(dt));
         this.obstacles = this.obstacles.filter(o => o.y < cameraY + Game.height + 200);
         for (const o of this.obstacles) {
             if (o.checkCollision(bubble)) { bubble.dead = true; Game.camera.addShake(8); if (AudioEngine && AudioEngine.ctx) AudioEngine.play('pop'); break; }
         }
+        this.coins.forEach(c => c.update(dt));
+        for (const c of this.coins) {
+            if (!c.collected && c.checkCollision(bubble)) {
+                c.collected = true;
+                Game.coins++;
+                Game.updateHUD();
+                this.createCoinEffect(c.x, c.y);
+                if (AudioEngine && AudioEngine.ctx) AudioEngine.play('coin');
+            }
+        }
+        this.coins = this.coins.filter(c => c.alpha > 0 && c.y < cameraY + Game.height + 100);
         this.updateParticles(dt);
         if (Game.settings.particles && bubble.state === 'floating' && !bubble.dead) {
             if (Math.random() < 0.2) {
@@ -569,8 +581,15 @@ class World {
         const tooClose = this.obstacles.some(o => Math.abs(o.y - y) < 80 && Math.abs(o.x - x) < 60);
         if (!tooClose) this.obstacles.push(obs);
     }
+    spawnCoin(y) {
+        const glass = Game.glass;
+        const margin = 45;
+        const x = glass.leftX + margin + Math.random() * (glass.width - margin * 2);
+        const tooClose = this.obstacles.some(o => Math.abs(o.y - y) < 70 && Math.abs(o.x - x) < 55);
+        if (!tooClose) this.coins.push(new Coin(x, y));
+    }
 
-    renderObstacles(ctx, cameraY) { this.obstacles.forEach(o => o.render(ctx)); }
+    renderObstacles(ctx, cameraY) { this.obstacles.forEach(o => o.render(ctx)); this.coins.forEach(c => c.render(ctx)); }
     renderParticles(ctx, cameraY) {
         this.particles.forEach(p => {
             const a = Math.min(1, p.life / 0.3); ctx.save(); ctx.globalAlpha = a;
@@ -588,10 +607,70 @@ class World {
         if (!Game.settings.particles) return;
         for (let i = 0; i < 3; i++) this.particles.push({ x: x + (Math.random() - 0.5) * 12, y: y + 6, vx: (Math.random() - 0.5) * 18, vy: 10 + Math.random() * 18, life: 0.25 + Math.random() * 0.2, maxLife: 0.45, size: 1.2 + Math.random() * 2.5, color: 'rgba(255,255,255,0.3)', type: 'splash' });
     }
+    createCoinEffect(x, y) {
+        if (!Game.settings.particles) return;
+        for (let i = 0; i < 10; i++) {
+            const ang = Math.random() * Math.PI * 2;
+            const sp = 25 + Math.random() * 70;
+            this.particles.push({ x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 0.25 + Math.random() * 0.25, maxLife: 0.5, size: 1.5 + Math.random() * 2.5, color: `rgba(255,${210 + Math.random() * 45},${Math.random() * 60},0.85)`, type: 'spark', gravity: 60 });
+        }
+        for (let i = 0; i < 4; i++) {
+            this.particles.push({ x, y, vx: (Math.random() - 0.5) * 15, vy: -40 - Math.random() * 40, life: 0.4 + Math.random() * 0.2, maxLife: 0.6, size: 2 + Math.random() * 2, color: 'rgba(255,230,100,0.7)', type: 'spark' });
+        }
+    }
     createDeathExplosion(x, y, r) {
         if (!Game.settings.particles) return;
         for (let i = 0; i < 18; i++) { const ang = (Math.PI * 2 / 18) * i + Math.random() * 0.5; const sp = 40 + Math.random() * 130; this.particles.push({ x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 0.4 + Math.random() * 0.4, maxLife: 0.8, size: 1.5 + Math.random() * 3.5, color: `rgba(255,${100 + Math.random() * 100},${Math.random() * 100},0.75)`, type: 'spark', gravity: 180 }); }
         for (let i = 0; i < 6; i++) { const ang = Math.random() * Math.PI * 2; const sp = 25 + Math.random() * 60; this.particles.push({ x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 0.5 + Math.random() * 0.3, maxLife: 0.8, size: 2.5 + Math.random() * 4, color: 'rgba(200,230,255,0.45)', type: 'spark', gravity: 80 }); }
+    }
+}
+
+class Coin {
+    constructor(x, y) {
+        this.x = x; this.y = y; this.radius = 13;
+        this.collected = false; this.scale = 1; this.alpha = 1;
+        this.floatPhase = Math.random() * Math.PI * 2;
+        this.sparklePhase = Math.random() * Math.PI * 2;
+    }
+    update(dt) {
+        this.floatPhase += dt * 2.5;
+        this.sparklePhase += dt * 4;
+        this.y += Math.sin(this.floatPhase) * 4 * dt;
+        if (this.collected) {
+            this.scale += dt * 5;
+            this.alpha -= dt * 4;
+        }
+    }
+    render(ctx) {
+        if (this.alpha <= 0) return;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.scale(this.scale, this.scale);
+        ctx.globalAlpha = this.alpha;
+        const r = this.radius;
+        ctx.beginPath(); ctx.arc(1, 2, r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fill();
+        const g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
+        g.addColorStop(0, '#fff8c8'); g.addColorStop(0.35, '#ffd700'); g.addColorStop(0.75, '#daa520'); g.addColorStop(1, '#b8860b');
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+        ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 1.0;
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,220,0.35)'; ctx.lineWidth = 0.7;
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.82, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = 'rgba(140,100,0,0.55)'; ctx.font = `bold ${Math.floor(r * 1.2)}px sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('$', 0, r * 0.05);
+        ctx.beginPath(); ctx.ellipse(-r * 0.35, -r * 0.35, r * 0.22, r * 0.11, -0.55, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.fill();
+        if (Math.sin(this.sparklePhase) > 0.75) {
+            ctx.beginPath(); ctx.arc(r * 0.45, -r * 0.45, 1.8, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
+        }
+        ctx.restore();
+    }
+    checkCollision(bubble) {
+        const dx = bubble.x - this.x, dy = bubble.y - this.y;
+        return Math.sqrt(dx * dx + dy * dy) < this.radius + bubble.radius * 0.5;
     }
 }
 
@@ -692,7 +771,7 @@ class LemonSlice extends Obstacle {
         const peelGrad = ctx.createRadialGradient(-r * 0.25, -r * 0.25, r * 0.1, 0, 0, r);
         peelGrad.addColorStop(0, '#d4b83a'); peelGrad.addColorStop(0.6, '#b8a020'); peelGrad.addColorStop(1, '#9a7b18');
         ctx.beginPath(); ctx.arc(0, 0, r * p, 0, Math.PI * 2); ctx.fillStyle = peelGrad; ctx.fill();
-        ctx.strokeStyle = '#8a6e15'; ctx.lineWidth = 1.8; ctx.stroke();
+        ctx.strokeStyle = '#8a6e15'; ctx.lineWidth = 1.0; ctx.stroke();
         // Альбедо — белый слой с градиентом
         const albGrad = ctx.createRadialGradient(-r * 0.15, -r * 0.15, r * 0.05, 0, 0, r * 0.86);
         albGrad.addColorStop(0, '#faf6e6'); albGrad.addColorStop(1, '#e8e2c8');
@@ -781,18 +860,18 @@ class MintLeaf extends Obstacle {
 const AudioEngine = {
     ctx: null, enabled: true,
     init() { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} },
-    play(type) { if (!this.ctx || !this.enabled || !Game.settings.sound) return; if (this.ctx.state === 'suspended') this.ctx.resume(); switch(type) { case 'stick': this.playStick(); break; case 'release': this.playRelease(); break; case 'pop': this.playPop(); break; case 'combo': this.playCombo(); break; } },
+    play(type) { if (!this.ctx || !this.enabled || !Game.settings.sound) return; if (this.ctx.state === 'suspended') this.ctx.resume(); switch(type) { case 'stick': this.playStick(); break; case 'release': this.playRelease(); break; case 'pop': this.playPop(); break; case 'combo': this.playCombo(); break; case 'coin': this.playCoin(); break; } },
 
     playStick() {
         const t = this.ctx.currentTime;
         const o = this.ctx.createOscillator(), g = this.ctx.createGain(), f = this.ctx.createBiquadFilter();
         o.type = 'sine'; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(50, t + 0.12);
         f.type = 'lowpass'; f.frequency.setValueAtTime(500, t); f.frequency.exponentialRampToValueAtTime(120, t + 0.1); f.Q.setValueAtTime(2, t);
-        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.18, t + 0.02); g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.06, t + 0.02); g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
         o.connect(f); f.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + 0.18);
         const o2 = this.ctx.createOscillator(), g2 = this.ctx.createGain();
         o2.type = 'sine'; o2.frequency.setValueAtTime(300, t + 0.03); o2.frequency.exponentialRampToValueAtTime(100, t + 0.1);
-        g2.gain.setValueAtTime(0, t + 0.03); g2.gain.linearRampToValueAtTime(0.06, t + 0.05); g2.gain.exponentialRampToValueAtTime(0.01, t + 0.13);
+        g2.gain.setValueAtTime(0, t + 0.03); g2.gain.linearRampToValueAtTime(0.02, t + 0.05); g2.gain.exponentialRampToValueAtTime(0.01, t + 0.13);
         o2.connect(g2); g2.connect(this.ctx.destination); o2.start(t + 0.03); o2.stop(t + 0.15);
     },
 
@@ -800,9 +879,9 @@ const AudioEngine = {
         const t = this.ctx.currentTime;
         const o = this.ctx.createOscillator(), g = this.ctx.createGain();
         o.type = 'sine'; o.frequency.setValueAtTime(250, t); o.frequency.exponentialRampToValueAtTime(450, t + 0.06);
-        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.1, t + 0.015); g.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.04, t + 0.015); g.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
         o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + 0.12);
-        setTimeout(() => { if (!this.ctx) return; const t2 = this.ctx.currentTime; const o2 = this.ctx.createOscillator(), g2 = this.ctx.createGain(); o2.type = 'sine'; o2.frequency.setValueAtTime(380, t2); o2.frequency.exponentialRampToValueAtTime(580, t2 + 0.04); g2.gain.setValueAtTime(0, t2); g2.gain.linearRampToValueAtTime(0.05, t2 + 0.01); g2.gain.exponentialRampToValueAtTime(0.01, t2 + 0.07); o2.connect(g2); g2.connect(this.ctx.destination); o2.start(t2); o2.stop(t2 + 0.1); }, 50);
+        setTimeout(() => { if (!this.ctx) return; const t2 = this.ctx.currentTime; const o2 = this.ctx.createOscillator(), g2 = this.ctx.createGain(); o2.type = 'sine'; o2.frequency.setValueAtTime(380, t2); o2.frequency.exponentialRampToValueAtTime(580, t2 + 0.04); g2.gain.setValueAtTime(0, t2); g2.gain.linearRampToValueAtTime(0.02, t2 + 0.01); g2.gain.exponentialRampToValueAtTime(0.01, t2 + 0.07); o2.connect(g2); g2.connect(this.ctx.destination); o2.start(t2); o2.stop(t2 + 0.1); }, 50);
     },
 
     playPop() {
@@ -829,6 +908,17 @@ const AudioEngine = {
     playCombo() {
         const t = this.ctx.currentTime, notes = [523, 659, 784, 1047];
         notes.forEach((fr, i) => { const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(fr, t + i * 0.08); g.gain.setValueAtTime(0, t + i * 0.08); g.gain.linearRampToValueAtTime(0.12, t + i * 0.08 + 0.02); g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.08 + 0.25); o.connect(g); g.connect(this.ctx.destination); o.start(t + i * 0.08); o.stop(t + i * 0.08 + 0.3); });
+    },
+    playCoin() {
+        const t = this.ctx.currentTime;
+        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(1100, t); o.frequency.exponentialRampToValueAtTime(1700, t + 0.05);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.1, t + 0.008); g.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + 0.12);
+        const o2 = this.ctx.createOscillator(), g2 = this.ctx.createGain();
+        o2.type = 'sine'; o2.frequency.setValueAtTime(1700, t + 0.02); o2.frequency.exponentialRampToValueAtTime(2200, t + 0.04);
+        g2.gain.setValueAtTime(0, t + 0.02); g2.gain.linearRampToValueAtTime(0.05, t + 0.03); g2.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+        o2.connect(g2); g2.connect(this.ctx.destination); o2.start(t + 0.02); o2.stop(t + 0.1);
     }
 };
 
@@ -848,7 +938,16 @@ const SkinManager = {
         { id: 'ice', name: 'Лёд', price: 280, colors: { main: 'rgba(200,240,255,0.4)', highlight: 'rgba(255,255,255,0.95)', shadow: 'rgba(100,180,220,0.3)', edge: 'rgba(200,240,255,0.25)', innerGlow: 'rgba(220,250,255,0.3)', glow: 'rgba(200,240,255,0.4)' }, theme: { stops: [{h:195,s:50,l:14},{h:200,s:45,l:18},{h:205,s:55,l:22},{h:190,s:60,l:12}], ray: [180,230,255], wave: [150,210,240] } }
     ],
     unlocked: ['default'],
-    init() { try { const s = JSON.parse(localStorage.getItem('bubble_skins') || '[]'); this.unlocked = [...new Set(['default', ...s])]; } catch(e) {} },
+    init() { try { const s = JSON.parse(localStorage.getItem('bubble_skins') || '[]'); this.unlocked = [...new Set(['default', ...s])]; } catch(e) {} this.updateMenuBubble(); },
+    updateMenuBubble() {
+        const skin = this.list.find(s => s.id === Game.currentSkin) || this.list[0];
+        const c = skin.colors;
+        const el = document.getElementById('menu-bubble');
+        if (el) {
+            el.style.background = `radial-gradient(circle at 30% 30%, ${c.highlight}, ${c.main}, ${c.shadow})`;
+            el.style.boxShadow = `0 0 24px ${c.glow.replace(')', ',0.4)')}, inset 0 0 24px rgba(255,255,255,0.15)`;
+        }
+    },
     get(r) { return (this.list.find(s => s.id === Game.currentSkin) || this.list[0]).colors; },
     getTheme() { return (this.list.find(s => s.id === Game.currentSkin) || this.list[0]).theme; },
     isUnlocked(id) { return this.unlocked.includes(id); },
@@ -869,13 +968,13 @@ const SkinManager = {
                     border: 1px solid ${c.edge};
                 "></div>
                 <div class="skin-name">${skin.name}</div>
-                ${!unlocked ? `<div class="skin-price">💎 ${skin.price}</div>` : ''}
+                ${!unlocked ? `<div class="skin-price">🪙 ${skin.price}</div>` : ''}
                 ${active ? '<div class="skin-check">✓</div>' : ''}
             `;
             card.addEventListener('click', () => {
                 if (active) return;
-                if (unlocked) { Game.currentSkin = skin.id; Game.save(); this.renderGrid(); if (AudioEngine && AudioEngine.ctx) AudioEngine.play('combo'); }
-                else if (Game.coins >= skin.price) { Game.coins -= skin.price; this.unlock(skin.id); Game.currentSkin = skin.id; Game.save(); this.renderGrid(); Game.updateHUD(); if (AudioEngine && AudioEngine.ctx) AudioEngine.play('combo'); }
+                if (unlocked) { Game.currentSkin = skin.id; Game.save(); this.renderGrid(); this.updateMenuBubble(); if (AudioEngine && AudioEngine.ctx) AudioEngine.play('combo'); }
+                else if (Game.coins >= skin.price) { Game.coins -= skin.price; this.unlock(skin.id); Game.currentSkin = skin.id; Game.save(); this.renderGrid(); this.updateMenuBubble(); Game.updateHUD(); if (AudioEngine && AudioEngine.ctx) AudioEngine.play('combo'); }
                 else { card.style.animation = 'shake 0.3s ease'; setTimeout(() => card.style.animation = '', 300); }
             });
             grid.appendChild(card);
@@ -900,7 +999,7 @@ function hideAllScreens() { document.querySelectorAll('#ui-layer .screen').forEa
 
 document.addEventListener('DOMContentLoaded', () => {
     AudioEngine.init(); SkinManager.init(); Game.world = new World(); Game.init();
-    showScreen('main-menu'); Game.updateHUD();
+    showScreen('main-menu'); Game.updateHUD(); SkinManager.updateMenuBubble();
 
     document.getElementById('btn-play').addEventListener('click', () => {
         if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
@@ -911,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-settings').addEventListener('click', () => { if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick'); updateSettingsUI(); showScreen('settings-screen'); });
     document.getElementById('btn-tutorial-ok').addEventListener('click', () => { localStorage.setItem('bubble_played', 'true'); if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release'); hideAllScreens(); showScreen('hud'); Game.start(); });
     document.getElementById('btn-restart').addEventListener('click', () => { if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release'); hideAllScreens(); showScreen('hud'); Game.start(); });
-    document.getElementById('btn-menu').addEventListener('click', () => { if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick'); showScreen('main-menu'); Game.updateHUD(); });
+    document.getElementById('btn-menu').addEventListener('click', () => { if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick'); showScreen('main-menu'); Game.updateHUD(); SkinManager.updateMenuBubble(); });
     document.getElementById('btn-skins-back').addEventListener('click', () => { if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick'); showScreen('main-menu'); });
     document.getElementById('btn-settings-back').addEventListener('click', () => { if (AudioEngine && AudioEngine.ctx) AudioEngine.play('stick'); Game.save(); showScreen('main-menu'); });
 
