@@ -84,9 +84,9 @@ html,body { width:100%; height:100%; overflow:hidden; background:#0a0a1a; font-f
 /* ===== RESPONSIVE ===== */
 @media (max-height:600px) { .game-title{font-size:34px} .menu-glass{padding:20px 16px} .btn{padding:12px;margin:6px 0} .menu-bubble-demo{width:70px;height:70px;margin-bottom:18px} .score-value{font-size:40px} }
 @media (min-height:800px) { .menu-glass{padding:44px 32px} .game-title{font-size:52px} .score-value{font-size:60px} }
-.coin-icon { display:inline-block; width:14px; height:14px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #fff8c8, #ffd700, #daa520); border:1.2px solid #b8860b; box-shadow:0 0 3px rgba(255,215,0,0.4); vertical-align:text-bottom; margin-right:3px; position:relative; }
-.coin-icon::after { content:'$'; position:absolute; top:50%; left:50%; transform:translate(-50%,-52%); font-size:8px; font-weight:900; color:rgba(140,100,0,0.7); }
-.coin-small { width:10px !important; height:10px !important; vertical-align:middle !important; margin-right:2px !important; border-width:1px !important; }
+.coin-icon { display:inline-block; width:16px; height:16px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #fff8c8, #ffd700, #daa520); border:1.2px solid #b8860b; box-shadow:0 0 3px rgba(255,215,0,0.4); vertical-align:middle; margin-right:3px; position:relative; top:-1px; }
+.coin-icon::after { content:'$'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:9px; font-weight:900; color:rgba(140,100,0,0.7); }
+.coin-small { width:10px !important; height:10px !important; vertical-align:middle !important; margin-right:2px !important; border-width:1px !important; top:0 !important; }
 .coin-small::after { font-size:6px !important; transform:translate(-50%,-50%) !important; }
 .skins-glass::-webkit-scrollbar{display:none} .skins-glass{-ms-overflow-style:none;scrollbar-width:none}
     </style>
@@ -681,7 +681,7 @@ class IceCube extends Obstacle {
     update(dt) { super.update(dt); this.floatPhase += dt * 1.4; this.y += Math.sin(this.floatPhase) * 5 * dt; }
     render(ctx) {
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
-        const s = this.size, h = s / 2, r = s * 0.18;
+        const s = this.size, h = s / 2, r = s * 0.12;
         // Мягкая тень под кубиком
         ctx.fillStyle = 'rgba(80,130,180,0.12)';
         ctx.beginPath(); ctx.roundRect(-h - 2, -h - 2 + s * 0.08, s + 4, s + 4, r); ctx.fill();
@@ -765,14 +765,14 @@ class LemonSlice extends Obstacle {
         // Альбедо — белый слой с градиентом
         const albGrad = ctx.createRadialGradient(-r * 0.15, -r * 0.15, r * 0.05, 0, 0, r * 0.86);
         albGrad.addColorStop(0, '#faf6e6'); albGrad.addColorStop(1, '#e8e2c8');
-        ctx.beginPath(); ctx.arc(0, 0, r * 0.93 * p, 0, Math.PI * 2); ctx.fillStyle = albGrad; ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.90 * p, 0, Math.PI * 2); ctx.fillStyle = albGrad; ctx.fill();
         // Мякоть — тёплый градиент
         const pulpGrad = ctx.createRadialGradient(-r * 0.2, -r * 0.2, r * 0.05, 0, 0, r * 0.76);
         pulpGrad.addColorStop(0, '#f0e060'); pulpGrad.addColorStop(0.5, '#dcc830'); pulpGrad.addColorStop(1, '#c4b020');
-        ctx.beginPath(); ctx.arc(0, 0, r * 0.87 * p, 0, Math.PI * 2); ctx.fillStyle = pulpGrad; ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.82 * p, 0, Math.PI * 2); ctx.fillStyle = pulpGrad; ctx.fill();
         // Дольки — светлые, мягкие линии
         const segs = 9; ctx.strokeStyle = 'rgba(200,185,120,0.45)'; ctx.lineWidth = 1.1;
-        for (let i = 0; i < segs; i++) { const a = (Math.PI * 2 / segs) * i; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * r * 0.84, Math.sin(a) * r * 0.84); ctx.stroke(); }
+        for (let i = 0; i < segs; i++) { const a = (Math.PI * 2 / segs) * i; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * r * 0.78, Math.sin(a) * r * 0.78); ctx.stroke(); }
         // Центр — белая сердцевина
         ctx.beginPath(); ctx.arc(0, 0, r * 0.09, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fill();
         // Крупный глянцевый блик сверху-слева
@@ -935,8 +935,9 @@ const SkinManager = {
         const el = document.getElementById('menu-bubble');
         if (el) {
             el.style.background = `radial-gradient(circle at 30% 30%, ${c.highlight}, ${c.main}, ${c.shadow})`;
-            const glowColor = c.glow.replace(')', ',0.5)');
-            el.style.boxShadow = `0 0 28px ${glowColor}, 0 0 48px ${c.glow.replace(')', ',0.2)')}, inset 0 0 24px rgba(255,255,255,0.15)`;
+            const glowStrong = c.glow.replace(/,[\d.]+\)$/, ',0.55)');
+            const glowSoft = c.glow.replace(/,[\d.]+\)$/, ',0.2)');
+            el.style.boxShadow = `0 0 28px ${glowStrong}, 0 0 52px ${glowSoft}, inset 0 0 24px rgba(255,255,255,0.15)`;
         }
     },
     get(r) { return (this.list.find(s => s.id === Game.currentSkin) || this.list[0]).colors; },
