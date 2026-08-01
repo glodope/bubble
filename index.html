@@ -387,7 +387,6 @@ class Bubble {
 
         if (this.state === 'floating') {
             this.vy = -speed;
-            // Быстрое затухание боковой скорости
             this.vx *= Math.pow(0.08, dt);
             this.vx += Math.sin(this.wobblePhase) * 6 * dt;
             this.x += this.vx * dt; this.y += this.vy * dt;
@@ -401,14 +400,14 @@ class Bubble {
             this.x += this.vx * dt; this.y += this.vy * dt;
             if (this.targetSide === 'left' && this.x <= glass.leftX + margin + 2) {
                 this.x = glass.leftX + margin; this.state = 'floating';
-                this.vx = 200; // отскок вправо
+                this.vx = 200;
                 this.impactSquash = 1.0;
                 if (Game.world) Game.world.createStickEffect(this.x, this.y, 'left');
                 if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
             }
             if (this.targetSide === 'right' && this.x >= glass.rightX - margin - 2) {
                 this.x = glass.rightX - margin; this.state = 'floating';
-                this.vx = -200; // отскок влево
+                this.vx = -200;
                 this.impactSquash = 1.0;
                 if (Game.world) Game.world.createStickEffect(this.x, this.y, 'right');
                 if (AudioEngine && AudioEngine.ctx) AudioEngine.play('release');
@@ -457,7 +456,8 @@ class Bubble {
         ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 0.5; ctx.stroke();
         ctx.restore();
     }
-}}
+}
+
 
 class Glass {
     constructor() {
